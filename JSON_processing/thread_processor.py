@@ -108,8 +108,9 @@ def process_channel_data(input_dir: Path, output_dir: Path):
         print(f"Saved {len(threads)} threads for channel {channel}")
 
 def main():
-    base_input_dir = Path("data/rtc_data")
-    base_output_dir = Path("data/channel_threads")
+    base_input_dir = Path("JSON_processing/data/rtc_data")
+    base_output_dir = Path("JSON_processing/data/channel_threads")
+    print(Path.cwd())
     
     if not base_input_dir.exists():
         print(f"Error: Input directory not found at {base_input_dir}")
