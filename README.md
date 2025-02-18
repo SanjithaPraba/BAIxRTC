@@ -65,7 +65,12 @@ If no errors appear, the setup is complete.
 If your branch requires a new package:
 ```bash
 pip install <package-name>
-pip freeze > requirements.txt
+pip freeze > temp_requirements.txt
+#combine and filter duplicates
+cat temp_requirements.txt requirements.txt | sort -u > combined_requirements.txt
+mv combined_requirements.txt requirements.txt
+rm temp_requirements.txt
+
 git add requirements.txt
 git commit -m "Added new dependency: <package-name>"
 git push origin <your-branch>
