@@ -8,7 +8,6 @@ Before creating a new branch, ensure your local `main` branch is up to date:
 git checkout main
 git pull origin main  # Ensure your local main is up to date
 git checkout -b <ticketNumber-new-branch-name>  # Create and switch to a new branch
-source venv/bin/activate  # (or `venv\Scripts\activate` on Windows)
 ```
 
 # Project Setup Instructions
