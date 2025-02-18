@@ -2,12 +2,17 @@
 Building RAG-based AI agents serving international non-profit, Rewriting The Code
 
 For Devs:
-**Every time you start a new branch**
-- git fetch origin
-- git checkout -b ticketNumber-my-new-branch origin/main
-- source venv/bin/activate  # (or `venv\Scripts\activate` on Windows)
+## Creating a New Branch
+Before creating a new branch, ensure your local `main` branch is up to date:
+```bash
+git checkout main
+git pull origin main  # Ensure your local main is up to date
+git checkout -b <ticketNumber-new-branch-name>  # Create and switch to a new branch
+source venv/bin/activate  # (or `venv\Scripts\activate` on Windows)
+```
 
 # Project Setup Instructions
+
 ## Prerequisites
 Ensure you have the following installed on your system:
 - Python 3.8 or later
@@ -80,3 +85,4 @@ pip install -r requirements.txt
 - **Merge only `requirements.txt` to `main` when adding dependencies.**
 
 Happy coding!
+
