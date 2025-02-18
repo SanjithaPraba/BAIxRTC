@@ -57,7 +57,7 @@ venv\Scripts\activate
 ### **4. Verify Installation**
 Run the following to check if all necessary packages are installed:
 ```bash
-python -c "import langchain; import libraryName1; import libraryName2; print('All imports work')"
+python -c "import libraryName1; import libraryName2; import libraryName3; print('All imports work')"
 ```
 If no errors appear, the setup is complete.
 
