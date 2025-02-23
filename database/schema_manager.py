@@ -109,7 +109,7 @@ class SchemaManager:
 # Example usage
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    channel_threads = Path("JSON_processing/data/channel_threads")
+    channel_threads = Path("../JSON_processing/data/channel_threads")
     schema_manager = SchemaManager()
     schema_manager.delete_threads_table()
     schema_manager.create_tables()
