@@ -1,3 +1,4 @@
 .env
 venv/
-data/
+JSON_processing/data/
+.idea/
