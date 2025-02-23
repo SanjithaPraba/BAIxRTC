@@ -1,15 +1,18 @@
 import psycopg2
 import os
 import json
+import sys
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from database.connection_pool import ConnectionPool
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from RTC_db.connection_pool import ConnectionPool
 
 # Initialize Mistral LLM
 llm = ChatOpenAI(
-    model="mistral-7b",
+    model="mistralai/Mistral-7B-Instruct-v0.2",
     openai_api_base="https://api.together.xyz/v1",
-    openai_api_key=os.getenv("TOGETHER_API_KEY"),
+    openai_api_key= os.getenv("TOGETHER_API_KEY"),
 )
 
 pool = ConnectionPool()
@@ -47,8 +50,8 @@ def fetch_all_messages():
     return messages
 
 # Fetch all messages
-slack_messages = fetch_all_messages()
-print(f"Fetched {len(slack_messages)} messages.")
+
+
 
 def generate_categories(messages, num_categories=10):
     """Asks the LLM to generate a list of categories from the dataset."""
@@ -62,8 +65,11 @@ def generate_categories(messages, num_categories=10):
     return categories
 
 
-# Generate 10 categories
-categories = generate_categories(slack_messages, num_categories=10)
-print("Generated Categories:", categories)
+def main():
+    slack_messages = fetch_all_messages()
+    # Generate 10 categories
+    print(f"Fetched {len(slack_messages)} messages.")
+    categories = generate_categories(slack_messages, num_categories=10)
+    return categories
 
 
