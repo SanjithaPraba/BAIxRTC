@@ -27,16 +27,43 @@ conn = psycopg2.connect(
     sslmode="require"
 )
 
+
 def fetch_all_messages():
+    """
+    Pulls everything from the 'threads' table.
+    Parses the replies (if JSON) and returns a list of message texts.
+    """
     with conn.cursor() as cur:
-        cur.execute("SELECT message_json FROM slack_data_table;")
+        # Grab all columns
+        cur.execute("SELECT * FROM threads;")
         rows = cur.fetchall()
-        messages = [json.loads(row[0])["text"] for row in rows]  # Extract only text
+
+        # Get column names for reference (if you want them)
+        colnames = [desc[0] for desc in cur.description]
+
+        # Build a list of message texts
+        messages = []
+        for row in rows:
+            record = dict(zip(colnames, row))
+
+            # If 'replies' is a JSON string, parse it
+            if "replies" in record and record["replies"] and isinstance(record["replies"], str):
+                try:
+                    record["replies"] = json.loads(record["replies"])
+                except json.JSONDecodeError:
+                    pass  # or handle error
+
+            # Append the main message text
+            # (This uses the 'message' column from 'threads')
+            messages.append(record["message"])
+
     return messages
+
 
 # Fetch all messages
 slack_messages = fetch_all_messages()
-print(f"Fetched {len(slack_messages)} messages")
+print(f"Fetched {len(slack_messages)} messages.")
+
 
 def generate_categories(messages, num_categories=10):
     """Asks the LLM to generate a list of categories from the dataset."""
@@ -45,13 +72,13 @@ def generate_categories(messages, num_categories=10):
     Categories:"""
 
     response = llm.predict(prompt).strip()
-    categories = response.split("\n")  # Split into a list
-    categories = [cat.strip("- ") for cat in categories if cat]  # Clean formatting
+    categories = response.split("\n")
+    categories = [cat.strip("- ") for cat in categories if cat]
     return categories
+
 
 # Generate 10 categories
 categories = generate_categories(slack_messages, num_categories=10)
 print("Generated Categories:", categories)
-
 
 
