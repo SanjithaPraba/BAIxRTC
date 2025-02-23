@@ -3,6 +3,7 @@ import os
 import json
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from database.connection_pool import ConnectionPool
 
 # Initialize Mistral LLM
 llm = ChatOpenAI(
@@ -11,28 +12,14 @@ llm = ChatOpenAI(
     openai_api_key=os.getenv("TOGETHER_API_KEY"),
 )
 
-# Load environment variables
-load_dotenv()
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-# Connect to Amazon RDS
-conn = psycopg2.connect(
-    host=DB_HOST,
-    dbname=DB_NAME,
-    user=DB_USER,
-    password=DB_PASSWORD,
-    sslmode="require"
-)
-
+pool = ConnectionPool()
 
 def fetch_all_messages():
     """
     Pulls everything from the 'threads' table.
     Parses the replies (if JSON) and returns a list of message texts.
     """
+    conn = pool.get_connection()
     with conn.cursor() as cur:
         # Grab all columns
         cur.execute("SELECT * FROM threads;")
@@ -59,11 +46,9 @@ def fetch_all_messages():
 
     return messages
 
-
 # Fetch all messages
 slack_messages = fetch_all_messages()
 print(f"Fetched {len(slack_messages)} messages.")
-
 
 def generate_categories(messages, num_categories=10):
     """Asks the LLM to generate a list of categories from the dataset."""
