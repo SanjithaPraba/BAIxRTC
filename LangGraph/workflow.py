@@ -3,9 +3,13 @@ from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+#from langchain.vectorstores import Chroma
 import categories
+import pickle
+import numpy as np
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+
 
 CATEGORY_LIST = []
 
@@ -48,37 +52,86 @@ def categorize_question(state: QueryState):
     return QueryState(question=state.question, category=category)
 
 
-# Define step 2: Store embeddings (Placeholder) --> Will move into "UPDATE" workflow
+# Define step 2: Store embeddings (Placeholder) --> Will move into "UPDATE" workflow and store in Chroma rather than local vector store FAISS
 def create_and_store_embedding(state: QueryState):
-    all_messages = categories.fetch_all_messages()
-    
-    texts = [f"Message: {item['message']}\nCategory: {item['category']}" for item in all_messages]
-    metadatas = [{"message": item["message"], "category": item["category"]} for item in all_messages]
+    # Fetch messages (each item is assumed to be a string)
+    all_messages = categories.fetch_all_messages()  # returns a list of strings
 
-    embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    # Create (or load) a Chroma vector store collection.
-    vector_store = Chroma.from_texts(
-        texts, 
-        embedding_model, 
-        metadatas=metadatas, 
-        collection_name="messages_collection"
-    )
+    if not all_messages:
+        print("No messages found in the database.")
+        return state
 
-    print("Embeddings have been stored in Chroma!")
-    return vector_store
+    texts = []
+    metadatas = []
+    for item in all_messages:
+        # If the item is not a dict, assume it's a string message.
+        if isinstance(item, dict):
+            message = item.get("message", "")
+            category = item.get("category", "Unknown")
+        else:
+            message = item
+            category = "Unknown"  # Default category if not provided
+
+        texts.append(f"Message: {message}\nCategory: {category}")
+        metadatas.append({"message": message, "category": category})
+
+    # Initialize embedding model
+    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+    # Create FAISS vector store (local storage)
+    vector_store = FAISS.from_texts(texts, embedding_model, metadatas=metadatas)
+
+    # Save locally using pickle
+    with open("local_embeddings.pkl", "wb") as f:
+        pickle.dump(vector_store, f)
+
+    print("Embeddings have been stored locally!")
+    return state
 
     return state
 
 
 # Define step 3: Retrieve relevant context (Placeholder)
 def retrieve_context(state: QueryState):
+    # Load stored embeddings
+    with open("local_embeddings.pkl", "rb") as f:
+        vector_store = pickle.load(f)
+
+    # Generate embedding for the query
+    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    query_embedding = embedding_model.embed_query(state.question)
+
+    # Search for relevant messages
+    results = vector_store.similarity_search_by_vector(query_embedding, k=3)  # Top 3 matches
+
+    # Format results for LLM response
+    context = "\n".join([res.metadata["message"] for res in results])
+    print(f"Retrieved Context:\n{context}")
+
+    return QueryState(question=state.question, category=state.category, response=context)
+
     return state
 
 
 # Define step 4: Generate response
 def generate_response(state: QueryState):
-    response = f"Generated response for: {state.question}"
-    return QueryState(question=state.question, category=state.category, response=response)
+
+    # Compose a detailed prompt incorporating the question, its category, and retrieved context.
+    prompt = (
+        f"You are a helpful assistant. "
+        f"Here is the question: \"{state.question}\".\n\n"
+        f"It has been categorized as: \"{state.category}\".\n\n"
+        f"Relevant context from previous messages:\n{state.response}\n\n"
+        f"Based on the above, please provide a comprehensive and context-aware answer."
+    )
+    
+    # Use the LLM to generate the final answer (using .invoke() as per deprecation notice)
+    final_response = llm.invoke(prompt).content.strip()
+    
+    return QueryState(question=state.question, category=state.category, response=final_response)
+
+    # response = f"Generated response for: {state.question}"
+    # return QueryState(question=state.question, category=state.category, response=response)
 
 
 # Build the LangGraph workflow
