@@ -1,17 +1,27 @@
 from langgraph.graph import StateGraph
-from langchain_openai import ChatOpenAI
+from langchain_together import ChatTogether
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
-#from langchain.vectorstores import Chroma
 import categories
 import pickle
 import numpy as np
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
-# Load API Key
+# Loading Together API Key
 load_dotenv()
+api_key = os.getenv("TOGETHER_API_KEY")
+
+# Ensure API key is set
+if not api_key:
+    raise ValueError("TOGETHER_API_KEY is missing. Please check your .env file.")
+
+# Initialize LLM
+llm = ChatTogether(
+    model="mistralai/Mistral-7B-Instruct-v0.2",
+    together_api_key=api_key,
+)
 
 # Define the state schema
 class QueryState(BaseModel):
