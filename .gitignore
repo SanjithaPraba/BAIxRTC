@@ -1,4 +1,33 @@
-.env
-venv/
 JSON_processing/data/
+
+# ignoring compiled python files
+__pycache__/
+*.pyc
+*.so
+
+# ignoring logs and temp files
+*.log
+*.swp
+*.swo
+*.swn
+*.DS_Store
+
+# ignoring pyCharm files
 .idea/
+
+# ignoring VSCode workspace settings
+.vscode/
+
+# virtual environments
+venv/
+.env
+*.env
+
+# chroma db storage (can change later)
+chroma_db/
+*.db
+
+# ignore database dumps (if applicable)
+*.sqlite3
+*.db
+*.sql
