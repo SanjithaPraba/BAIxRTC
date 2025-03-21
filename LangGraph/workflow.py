@@ -6,8 +6,9 @@ from pydantic import BaseModel
 import categories
 import pickle
 import numpy as np
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+from query_categorization import categorize_question
 
 # Loading Together API Key
 load_dotenv()
