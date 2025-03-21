@@ -18,64 +18,55 @@ class SchemaManager:
         self.create_threads_table()
         self.connection.commit()
         logging.info("✅ Database tables created successfully.")
-
-    def create_threads_table(self):
-        """Create the messages table."""
+        
+    #type: original question, reply, follow up question 
+    def create_messages_table(self): 
         self.cursor.execute("""
             CREATE TABLE threads (
-                id SERIAL PRIMARY KEY,                
-                thread_ts VARCHAR(50),               
-                message VARCHAR(100000),                         
-                replies JSONB,                         
-                reply_count INT                        
+                id SERIAL PRIMARY KEY
+                thread_ts VARCHAR(50), 
+                message VARCHAR(100000),
+                prev_message_id INT,
+                category VARCHAR(100)
             );
         """)
+
     def delete_threads_table(self):
         """Delete the threads table."""
         self.cursor.execute("DROP TABLE IF EXISTS threads;")
 
-    def insert_message(self, message):
-        """Insert a message (thread parent) into the threads table."""
+    def insert_message(self, message, prev_msg_data):
         message_text = message.get("text")
+        category = "" #get category from model 
         self.cursor.execute("""
-            INSERT INTO threads (thread_ts, message, replies, reply_count)
-            VALUES (%s, %s, %s, %s)
-        """, (
-            message.get("ts"),                         
+            INSERT INTO threads (thread_ts, message, prev_message_id, category)
+            VALUES (%s, %s, %d, %s)
+            RETURNING id
+        """, (   
+            prev_msg_data[0], #thread id  
             message_text,
-            json.dumps([]),                            
-            0                                     
+            prev_msg_data[1], #prev msg id
+            category         #generated
         ))
-
-    def insert_replies(self, thread_ts, replies):
-        """Insert replies into the threads table, updating the replies and reply_count."""
-        if replies:
-            reply_count = len(replies)                 
-            self.cursor.execute("""
-                UPDATE threads
-                SET replies = %s, reply_count = %s
-                WHERE thread_ts = %s
-            """, (
-                json.dumps(replies),              
-                reply_count,                          
-                thread_ts                           
-            ))
+        prev_msg_data[0] = self.cursor.fetchone() #store msg id to pass on 
 
     def process_channel_data(self, channel_data):
         """Process and insert thread data from a list of threads."""
         if not isinstance(channel_data, list):
             logging.error("Expected channel_data to be a list.")
             return
-
-        for thread in channel_data:
-            if "message" in thread:
-                self.insert_message(thread["message"]) #parent msg
+        
+        prev_msg_data = [None, None] #holds thread_ts, prev_msg_id - check if this will be NULL in db
+        for thread in channel_data: 
+            if "message" in thread: 
+                prev_msg_data[0] = thread["message"]["ts"] #holds thread_ts for all messages in thread
+                self.insert_message_threads(thread["message"], prev_msg_data)
                 replies = thread.get("replies", [])
                 if replies:
-                    formatted_replies = []
                     for reply in replies:
-                        formatted_replies.append({"text": reply.get("text")})
-                    self.insert_replies(thread["message"]["ts"], formatted_replies)
+                        #formatted_replies.append({"text": reply.get("text")})
+                        #self.insert_replies(thread["message"]["ts"], formatted_replies)
+                        self.insert_message(reply, prev_msg_data)
 
 
     def add_jsons(self, channel_threads_directory: Path): #adapted after rtc-parse code
