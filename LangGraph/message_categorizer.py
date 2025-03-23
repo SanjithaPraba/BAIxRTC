@@ -23,32 +23,38 @@ class MessageCategorizer:
             model="mistralai/Mixtral-8x7B-Instruct-v0.1"
         )
 
-    def classify(self, message: str) -> str:
-        if not self.is_question_or_request(message):
-            return "Not a question"
+    def classify_batch(self, messages: list[str]) -> list[str]:
+        if not messages:
+            return []
 
+        # Format messages as a numbered list
+        numbered_messages = "\n".join([f"{i+1}. {msg}" for i, msg in enumerate(messages)])
         category_list = "\n".join(f"- {c}" for c in self.categories)
+
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are an assistant that classifies questions into predefined support categories."),
-            ("human", f"""Here are the allowed categories:
-    {category_list}
+            ("system", f"""You are a support assistant categorizing Slack messages. 
+Your job is to classify each message into one of the following categories:
 
-    Classify this question into one of those categories. Only return the category name.
+{category_list}
 
-    Message: {message}
-    """)
+Return only the category name for each message, in order. If the message is not a question, respond with "Not a question".
+
+"""),
+            ("human", f"""Classify these messages:
+
+{numbered_messages}
+
+Return format:
+1. <Category>
+2. <Category>
+...
+""")
         ])
+
         chain = prompt | self.llm
         response = chain.invoke({})
-        return response.content.strip()
+        raw_output = response.content.strip().split("\n")
 
-    def is_question_or_request(self, message: str) -> bool:
-        prompt = ChatPromptTemplate.from_messages([
-            ("system",
-             "You are an assistant helping classify support messages. Decide whether the message is asking a question or requesting help. Respond only with 'Yes' or 'No'."),
-            ("human", f"Message: \"{message}\"")
-        ])
-        chain = prompt | self.llm
-        response = chain.invoke({})
-        return response.content.strip().lower().startswith("yes")
+        # Clean up and return a list of categories
+        return [line.split(". ", 1)[-1].strip() for line in raw_output if line]
 

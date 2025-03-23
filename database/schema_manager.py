@@ -13,13 +13,13 @@ class SchemaManager:
         self.pool = ConnectionPool()
         self.connection = self.pool.get_connection()
         self.cursor = self.connection.cursor()
-        self.categorizer = message_categorizer.MessageCategorizer(Path("/Users/emilyzhou/PycharmProjects/BAIxRTC/database/categories.json"))
+        self.categorizer = message_categorizer.MessageCategorizer(Path("../database/categories.json"))
 
     def create_tables(self):
         """Create all necessary tables for the Slack bot."""
         self.create_threads_table()
         self.connection.commit()
-        logging.info("✅ Database tables created successfully.")
+        logging.info("database tables created successfully.")
 
     # t ype: original question, reply, follow up question
     def create_threads_table(self):
@@ -37,11 +37,11 @@ class SchemaManager:
         """Delete the threads table."""
         self.cursor.execute("DROP TABLE IF EXISTS threads;")
         self.connection.commit()
-        print("✅ threads table cleared")
+        print("threads table cleared")
 
     def insert_message(self, message, prev_msg_data):
         message_text = message.get("text")
-        category = self.categorizer.classify(message_text)
+        category = None # categorization is done in the next step
 
         self.cursor.execute("""
             INSERT INTO threads (thread_ts, message, prev_message_id, category)
@@ -90,7 +90,7 @@ class SchemaManager:
                         logging.error(f"Error processing file {file_path}: {e}")
 
         self.connection.commit()
-        logging.info("✅ Thread data inserted into the database.")
+        logging.info("Thread data inserted into the database.")
 
 
     def close_connection(self):
@@ -104,7 +104,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     channel_threads = Path("../JSON_processing/data/channel_threads")
     schema_manager = SchemaManager()
-    schema_manager.delete_threads_table()
+    # schema_manager.delete_threads_table()
+    # DO NOT DELETE THE TABLE UNLESS ABSOLUTELY NECESSARY BC CLASSIFYING THE MESSAGES TAKES FOREVER
     schema_manager.create_tables()
     schema_manager.add_jsons(channel_threads)
     schema_manager.close_connection()
