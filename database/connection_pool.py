@@ -13,6 +13,11 @@ class ConnectionPool:
         self.database = os.getenv("DB_NAME")
         self.user = os.getenv("DB_USER")
         self.password = os.getenv("DB_PASSWORD")
+        self.port = os.getenv("DB_PORT")
+        print("Host:", self.host)
+        print("Database:", self.database)
+        print("User:", self.user)
+        print("Port:", self.port)
         self.connection = None  # Placeholder for active connection
 
     def get_connection(self):
@@ -20,6 +25,7 @@ class ConnectionPool:
         if self.connection is None or self.connection.closed:
             self.connection = psycopg2.connect(
                 host=self.host,
+                port = self.port,
                 database=self.database,
                 user=self.user,
                 password=self.password

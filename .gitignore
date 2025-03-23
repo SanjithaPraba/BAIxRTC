@@ -2,3 +2,9 @@
 venv/
 JSON_processing/data/
 .idea/
+
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
