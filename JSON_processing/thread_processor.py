@@ -22,7 +22,7 @@ def clean_message(message: dict, category: str) -> dict:
         "category": category
     }
 
-def batch_categorize_messages(processed_json_file_path: str, categories_file: str, batch_size: int = 100) -> List[str]:
+def batch_categorize_messages(processed_json_file_path: str, categories_file: str, batch_size: int = 500) -> List[str]:
     """
     Process messages in batches and return a flat list of categories.
     The categories are generated in the same order as the messages.
@@ -79,7 +79,7 @@ Return format:
 
     return all_categories
 
-def process_channel_data(input_dir: Path, output_dir: Path, categories_file: str, batch_size: int = 100):
+def process_channel_data(input_dir: Path, output_dir: Path, categories_file: str, batch_size: int = 500):
     """
     For each JSON file in input_dir, process the messages in batches,
     add a category attribute, and write out the updated messages.
