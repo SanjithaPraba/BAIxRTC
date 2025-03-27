@@ -1,124 +1,136 @@
 import json
-from collections import defaultdict
+import os
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
-def clean_message(message: dict) -> dict:
-    """Extract only essential message data."""
+from dotenv import load_dotenv
+from langchain_together import ChatTogether
+from langchain.prompts import ChatPromptTemplate
+
+load_dotenv()
+api_key = os.getenv("TOGETHER_API_KEY")
+if not api_key:
+    raise ValueError("TOGETHER_API_KEY is missing. Please check your .env file.")
+
+def clean_message(message: dict, category: str) -> dict:
+    """Extract essential message data and assign a category."""
     return {
         "text": message.get("text", ""),
         "user": message.get("user", ""),
         "ts": message.get("ts", ""),
-        "team": message.get("team", "")
+        "team": message.get("team", ""),
+        "category": category
     }
 
-def group_messages_by_thread(rtc_data):
-    # Define subtypes to exclude
-    EXCLUDED_SUBTYPES = {
-        'channel_join',
-        'channel_leave', 
-        'channel_purpose',
-        'channel_topic',
-        'channel_name',
-        'channel_archive',
-        'channel_unarchive',
-        'bot_message'
-    }
-    
-    threads = []
-    
-    for message in rtc_data:
-        # Skip if message is not a dictionary
-        if not isinstance(message, dict):
-            print(f"Skipping invalid message format: {message}")
-            continue
-            
-        # Skip system messages and messages with excluded subtypes
-        if message.get("subtype") in EXCLUDED_SUBTYPES:
-            continue
-            
-        thread_ts = message.get("thread_ts")
-        message_ts = message.get("ts")
-        
-        # Skip if message doesn't have a timestamp
-        if not message_ts:
-            continue
-        
-        # If this is a parent message (start of a thread)
-        if not thread_ts or thread_ts == message_ts:
-            thread_replies = []
-            
-            # If message has replies, collect them
-            if message.get("replies"):
-                # Find all reply messages in the rtc_data
-                for reply_info in message["replies"]:
-                    reply_ts = reply_info["ts"]
-                    # Find the full reply message in rtc_data
-                    for reply_msg in rtc_data:
-                        if isinstance(reply_msg, dict) and reply_msg.get("ts") == reply_ts:
-                            thread_replies.append(clean_message(reply_msg))
-                            break
-            
-            # Create clean thread object
-            thread = {
-                "thread_ts": message_ts,
-                "message": clean_message(message),
-                "replies": thread_replies,
-                "reply_count": len(thread_replies)
-            }
-            threads.append(thread)
-    
-    return threads
+def batch_categorize_messages(processed_json_file_path: str, categories_file: str, batch_size: int = 100) -> List[str]:
+    """
+    Process messages in batches and return a flat list of categories.
+    The categories are generated in the same order as the messages.
+    """
+    with open(processed_json_file_path, 'r') as f:
+        messages = json.load(f)
 
-def process_channel_data(input_dir: Path, output_dir: Path):
-    """Process all channel data and group threads by channel."""
-    # Dictionary to store threads by channel
-    channel_threads: Dict[str, List] = defaultdict(list)
-    
-    # Process each JSON file in the input directory
+    with open(categories_file, 'r') as f:
+        categories = json.load(f)
+
+    # Get list of allowed categories.
+    category_values = categories["categories"] if isinstance(categories, dict) else categories
+    category_list = "\n".join(f"- {c}" for c in category_values)
+
+    llm = ChatTogether(
+        together_api_key=api_key,
+        model="mistralai/Mixtral-8x7B-Instruct-v0.1"
+    )
+
+    all_categories = []
+    total_messages = len(messages)
+
+    for i in range(0, total_messages, batch_size):
+        batch = messages[i:min(i + batch_size, total_messages)]
+        texts = [msg.get("text", "") for msg in batch]
+
+        numbered_messages = "\n".join([f"{idx + 1}. {text}" for idx, text in enumerate(texts)])
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", f"""You are a support assistant categorizing Slack messages.
+Classify each message into one of the following categories:
+
+{category_list}
+
+Return only the category name for each message, in order. If a message does not fit any category, respond with "other" and what the message could be potentially related to.
+"""),
+            ("human", f"""Classify these messages:
+
+{numbered_messages}
+
+Return format:
+1. <Category>
+2. <Category>
+...
+""")
+        ])
+
+        chain = prompt | llm
+        response = chain.invoke({})
+        raw_output = response.content.strip().split("\n")
+        batch_categories = [line.split(". ", 1)[-1].strip() for line in raw_output if line]
+        
+        # Append the categories for this batch
+        all_categories.extend(batch_categories)
+
+    return all_categories
+
+def process_channel_data(input_dir: Path, output_dir: Path, categories_file: str, batch_size: int = 100):
+    """
+    For each JSON file in input_dir, process the messages in batches,
+    add a category attribute, and write out the updated messages.
+    """
     for input_file in input_dir.glob("**/*.json"):
-        # Get channel name from the parent directory
-        channel = input_file.parent.name
         print(f"Processing {input_file}")
-        
-        # Read input data
         try:
             with open(input_file, 'r') as f:
-                rtc_data = json.load(f)
-                if not isinstance(rtc_data, list):
-                    print(f"Skipping {input_file}: Data is not a list")
-                    continue
-                # Group messages into threads
-                threads = group_messages_by_thread(rtc_data)
-                # Add threads to channel collection
-                channel_threads[channel].extend(threads)
-        except json.JSONDecodeError as e:
-            print(f"Error reading {input_file}: {e}")
+                messages = json.load(f)
+            if not isinstance(messages, list):
+                print(f"Skipping {input_file}: Data is not a list")
+                continue
+
+            # Build a list of categories (in order) for all messages in the file.
+            generated_categories = batch_categorize_messages(str(input_file), categories_file, batch_size)
+
+            # In case the number of generated categories doesn't match, default missing ones to "other"
+            if len(generated_categories) < len(messages):
+                generated_categories.extend(["other"] * (len(messages) - len(generated_categories)))
+            elif len(generated_categories) > len(messages):
+                generated_categories = generated_categories[:len(messages)]
+
+            # Build updated messages by zipping messages and generated categories.
+            updated_messages = [
+                clean_message(msg, category)
+                for msg, category in zip(messages, generated_categories)
+            ]
+
+            # Save updated messages to output file.
+            output_file = output_dir / input_file.name
+            with open(output_file, 'w') as f:
+                json.dump(updated_messages, f, indent=2)
+            print(f"Saved categorized messages to {output_file}")
         except Exception as e:
             print(f"Error processing {input_file}: {e}")
-    
-    # Create output directory if it doesn't exist
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save threads grouped by channel
-    for channel, threads in channel_threads.items():
-        output_file = output_dir / f"{channel}_threads.json"
-        with open(output_file, 'w') as f:
-            json.dump(threads, f, indent=2)
-        print(f"Saved {len(threads)} threads for channel {channel}")
 
 def main():
-    base_input_dir = Path("../JSON_processing/data/rtc_data")
-    base_output_dir = Path("../JSON_processing/data/channel_threads")
-    print(Path.cwd())
+    base_input_dir = Path("/Users/sanjitha/Documents/BAIxRTC/JSON_processing/data/processed")
+    base_output_dir = Path("/Users/sanjitha/Documents/BAIxRTC/JSON_processing/data/categorized")
+    categories_file = "/Users/sanjitha/Documents/BAIxRTC/JSON_processing/categories.json"
+
+    print(f"Current working directory: {Path.cwd()}")
     
     if not base_input_dir.exists():
         print(f"Error: Input directory not found at {base_input_dir}")
         return
-    
+
+    base_output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Processing data from {base_input_dir}")
-    process_channel_data(base_input_dir, base_output_dir)
-    print(f"Thread data saved to {base_output_dir}")
+    process_channel_data(base_input_dir, base_output_dir, categories_file)
+    print(f"Categorized data saved to {base_output_dir}")
 
 if __name__ == "__main__":
     main()
