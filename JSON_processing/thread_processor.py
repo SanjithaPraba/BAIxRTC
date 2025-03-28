@@ -22,7 +22,7 @@ def clean_message(message: dict, category: str) -> dict:
         "category": category
     }
 
-def batch_categorize_messages(processed_json_file_path: str, categories_file: str, batch_size: int = 500) -> List[str]:
+def batch_categorize_messages(processed_json_file_path: str, categories_file: str, batch_size: int = 50) -> List[str]:
     """
     Process messages in batches and return a flat list of categories.
     The categories are generated in the same order as the messages.
@@ -79,7 +79,7 @@ Return format:
 
     return all_categories
 
-def process_channel_data(input_dir: Path, output_dir: Path, categories_file: str, batch_size: int = 500):
+def process_channel_data(input_dir: Path, output_dir: Path, categories_file: str, batch_size: int = 50):
     """
     For each JSON file in input_dir, process the messages in batches,
     add a category attribute, and write out the updated messages.
@@ -117,11 +117,13 @@ def process_channel_data(input_dir: Path, output_dir: Path, categories_file: str
             print(f"Error processing {input_file}: {e}")
 
 def main():
-    base_input_dir = Path("/Users/sanjitha/Documents/BAIxRTC/JSON_processing/data/processed")
-    base_output_dir = Path("/Users/sanjitha/Documents/BAIxRTC/JSON_processing/data/categorized")
-    categories_file = "/Users/sanjitha/Documents/BAIxRTC/JSON_processing/categories.json"
+   # Get the directory containing the current file
+    current_dir = Path(__file__).parent
 
-    print(f"Current working directory: {Path.cwd()}")
+    # Build paths relative to the current file's directory
+    base_input_dir = current_dir / "data" / "processed"
+    base_output_dir = current_dir / "data" / "categorized"
+    categories_file = current_dir / "categories.json"
     
     if not base_input_dir.exists():
         print(f"Error: Input directory not found at {base_input_dir}")

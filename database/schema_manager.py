@@ -15,71 +15,57 @@ class SchemaManager:
 
     def create_tables(self):
         """Create all necessary tables for the Slack bot."""
-        self.create_threads_table()
+        self.create_messages_table()
         self.connection.commit()
         logging.info("✅ Database tables created successfully.")
 
-    def create_threads_table(self):
-        """Create the messages table."""
+    def create_messages_table(self):
+        """Create the messages table with one row per message."""
         self.cursor.execute("""
-            CREATE TABLE threads (
-                id SERIAL PRIMARY KEY,                
-                thread_ts VARCHAR(50),               
-                message VARCHAR(100000),                         
-                replies JSONB,                         
-                reply_count INT                        
+            CREATE TABLE messages (
+                id SERIAL PRIMARY KEY,
+                text VARCHAR(100000),
+                username VARCHAR(50),
+                ts VARCHAR(50),
+                team VARCHAR(50),
+                category VARCHAR(255)
             );
         """)
-    def delete_threads_table(self):
-        """Delete the threads table."""
-        self.cursor.execute("DROP TABLE IF EXISTS threads;")
+
+    def delete_messages_table(self):
+        """Delete the messages table."""
+        self.cursor.execute("DROP TABLE IF EXISTS messages;")
 
     def insert_message(self, message):
-        """Insert a message (thread parent) into the threads table."""
-        message_text = message.get("text")
+        """Insert a message into the messages table."""
         self.cursor.execute("""
-            INSERT INTO threads (thread_ts, message, replies, reply_count)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO messages (text, username, ts, team, category)
+            VALUES (%s, %s, %s, %s, %s)
         """, (
-            message.get("ts"),                         
-            message_text,
-            json.dumps([]),                            
-            0                                     
+            message.get("text"),
+            message.get("username"),
+            message.get("ts"),
+            message.get("team"),
+            message.get("category")
         ))
 
-    def insert_replies(self, thread_ts, replies):
-        """Insert replies into the threads table, updating the replies and reply_count."""
-        if replies:
-            reply_count = len(replies)                 
-            self.cursor.execute("""
-                UPDATE threads
-                SET replies = %s, reply_count = %s
-                WHERE thread_ts = %s
-            """, (
-                json.dumps(replies),              
-                reply_count,                          
-                thread_ts                           
-            ))
-
     def process_channel_data(self, channel_data):
-        """Process and insert thread data from a list of threads."""
+        """
+        Process and insert message data from a list of messages.
+        Each JSON object is a standalone message.
+        """
         if not isinstance(channel_data, list):
             logging.error("Expected channel_data to be a list.")
             return
 
-        for thread in channel_data:
-            if "message" in thread:
-                self.insert_message(thread["message"]) #parent msg
-                replies = thread.get("replies", [])
-                if replies:
-                    formatted_replies = []
-                    for reply in replies:
-                        formatted_replies.append({"text": reply.get("text")})
-                    self.insert_replies(thread["message"]["ts"], formatted_replies)
+        for message in channel_data:
+            self.insert_message(message)
 
-
-    def add_jsons(self, channel_threads_directory: Path): #adapted after rtc-parse code
-        """Process JSON files from the directory and insert the data into the database."""
+    def add_jsons(self, channel_threads_directory: Path):
+        """
+        Process JSON files from the directory and insert the data into the database.
+        Each JSON file is expected to contain a list of message objects.
+        """
         if not channel_threads_directory.exists():
             logging.error(f"Directory {channel_threads_directory} does not exist.")
             return
@@ -90,15 +76,14 @@ class SchemaManager:
                 with open(file_path, 'r') as f:
                     try:
                         channel_data = json.load(f)
-                        self.process_channel_data(channel_data) 
+                        self.process_channel_data(channel_data)
                     except json.JSONDecodeError as e:
                         logging.error(f"Error decoding JSON from {file_path}: {e}")
                     except Exception as e:
                         logging.error(f"Error processing file {file_path}: {e}")
 
         self.connection.commit()
-        logging.info("✅ Thread data inserted into the database.")
-    
+        logging.info("✅ Message data inserted into the database.")
 
     def close_connection(self):
         """Release the database connection back to the pool."""
@@ -109,9 +94,17 @@ class SchemaManager:
 # Example usage
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    channel_threads = Path("/Users/sanjitha/Documents/BAIxRTC/JSON_processing/data/channel_threads")
+    # Get the directory where this file (schema_manager.py) is located
+    current_dir = Path(__file__).parent
+
+    # Get the parent directory (which contains both 'database' and 'JSON_processing')
+    parent_dir = current_dir.parent
+
+    # Build the path to the categorized messages directory
+    channel_messages = parent_dir / "JSON_processing" / "data" / "categorized"
+    
     schema_manager = SchemaManager()
-    schema_manager.delete_threads_table()
+    schema_manager.delete_messages_table()
     schema_manager.create_tables()
-    schema_manager.add_jsons(channel_threads)
+    schema_manager.add_jsons(channel_messages)
     schema_manager.close_connection()
