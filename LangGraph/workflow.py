@@ -46,7 +46,8 @@ def create_and_store_embedding(state: QueryState):
     texts = []
     metadatas = []
     ids = []
-    for i, item in all_messages:
+    i = 0
+    for item in all_messages:
         # Extract message text and category from the dictionary.
         message = item.get("text", "")
         category = item.get("category", "Unknown")
@@ -54,6 +55,7 @@ def create_and_store_embedding(state: QueryState):
         texts.append(f"text: {message}\ncategory: {category}")
         metadatas.append({"text": message, "category": category})
         ids.append(f"msg_{i}")
+        i+=1
 
     # Initialize embedding model
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
