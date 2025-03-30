@@ -1,24 +1,21 @@
-import chromadb
+from dotenv import load_dotenv
+# Loading Together API Key and Chroma Host and Port
+load_dotenv(dotenv_path="./.env")
+
 from langgraph.graph import StateGraph
 from langchain_together import ChatTogether
 import os
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from fetch_db_messages import fetch_all_messages
 import pickle
 import chromadb
+from chromadb import HttpClient
 from chromadb.config import Settings
 import numpy as np
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
-# Loading Together API Key
-load_dotenv()
 api_key = os.getenv("TOGETHER_API_KEY")
-
-# Fetch host and port from env
-CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
-CHROMA_PORT = int(os.getenv("CHROMA_PORT", 8000))
 
 # Ensure API key is set
 if not api_key:
@@ -40,6 +37,7 @@ class QueryState(BaseModel):
 def create_and_store_embedding(state: QueryState):
     # Fetch messages (each item is a dictionary containing 'text' and 'category')
     all_messages = fetch_all_messages()  # returns a list of dicts
+    # why is it not returning a list of dicts
 
     if not all_messages:
         print("No messages found in the database.")
@@ -48,13 +46,14 @@ def create_and_store_embedding(state: QueryState):
     texts = []
     metadatas = []
     ids = []
-    for item in all_messages:
+    for i, item in all_messages:
         # Extract message text and category from the dictionary.
         message = item.get("text", "")
         category = item.get("category", "Unknown")
 
         texts.append(f"text: {message}\ncategory: {category}")
         metadatas.append({"text": message, "category": category})
+        ids.append(f"msg_{i}")
 
     # Initialize embedding model
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -62,24 +61,30 @@ def create_and_store_embedding(state: QueryState):
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     embeddings = embedding_model.embed_documents(texts)
 
+    # Fetch host and port from env
+    CHROMA_HOST = os.getenv("CHROMA_HOST")
+    CHROMA_PORT = os.getenv("CHROMA_PORT")
+
+    print("CHROMA_HOST:", repr(CHROMA_HOST))
+    print("CHROMA_PORT:", repr(CHROMA_PORT))
+
     # Step 2: Connect to ChromaDB running on your EC2 (update host/port if needed)
     if not CHROMA_HOST:
         raise ValueError("CHROMA_HOST not set")
     if not CHROMA_PORT:
         raise ValueError("CHROMA_PORT not set")
 
-        # Construct the Chroma Settings object
-    chroma_settings = Settings(
-        chroma_api_impl="rest",
-        chroma_server_host=CHROMA_HOST,
-        chroma_server_http_port=int(CHROMA_PORT),
-    )
-
-    # Initialize the client with Settings
-    chroma_client = chromadb.HttpClient(settings=chroma_settings)
+    print(f"Connecting to Chroma at http://{CHROMA_HOST}:{CHROMA_PORT}")
+    # Initialize the client with settings
+    chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 
     # Step 3: Create or get a collection
     collection = chroma_client.get_or_create_collection(name="slack-faqs")
+
+    print(f"Number of texts: {len(texts)}")
+    print(f"Number of metadatas: {len(metadatas)}")
+    print(f"Number of ids: {len(ids)}")
+    print(f"Number of embeddings: {len(embeddings)}")
 
     # Step 4: Add the embeddings
     collection.add(
