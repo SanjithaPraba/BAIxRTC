@@ -39,7 +39,7 @@ def retrieve_context(state: QueryState):
     # Query Chroma for relevant messages
     results = collection.query(
         query_texts=[state.question],
-        n_results=15  # try 5 for more context
+        n_results=20  # try 20 for more context (increasing helps the bot ! it's able to grab the appropriate channels :D)
     )
 
     # Join retrieved documents
@@ -84,4 +84,21 @@ def create_and_store_embedding(state: QueryState):
         ids.append(f"msg_{i}")
     embeddings = embedding_model.embed_documents(texts)
     collection.add(documents=texts, metadatas=metadatas, ids=ids, embeddings=embeddings)
+    return state
+
+def should_respond(state: QueryState) -> QueryState:
+    decision_prompt = f"""
+You are a Slack bot that only responds to valid support questions.
+Given the message below, determine if it's a question the bot should respond to:
+
+Message:
+{state.question}
+
+Answer with ONLY 'yes' or 'no'. Do not explain.
+"""
+    answer = llm.invoke(decision_prompt).content.strip().lower()
+    if answer.startswith("yes"):
+        state.category = "should_respond"
+    else:
+        state.category = "skip"
     return state
