@@ -1,3 +1,4 @@
+import chromadb
 from langgraph.graph import StateGraph
 from langchain_together import ChatTogether
 import os
@@ -5,6 +6,8 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from fetch_db_messages import fetch_all_messages
 import pickle
+import chromadb
+from chromadb.config import Settings
 import numpy as np
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -12,6 +15,10 @@ from langchain_community.vectorstores import FAISS
 # Loading Together API Key
 load_dotenv()
 api_key = os.getenv("TOGETHER_API_KEY")
+
+# Fetch host and port from env
+CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
+CHROMA_PORT = int(os.getenv("CHROMA_PORT", 8000))
 
 # Ensure API key is set
 if not api_key:
@@ -40,6 +47,7 @@ def create_and_store_embedding(state: QueryState):
 
     texts = []
     metadatas = []
+    ids = []
     for item in all_messages:
         # Extract message text and category from the dictionary.
         message = item.get("text", "")
@@ -50,15 +58,38 @@ def create_and_store_embedding(state: QueryState):
 
     # Initialize embedding model
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    # Step 1: Embed the texts
+    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = embedding_model.embed_documents(texts)
 
-    # Create FAISS vector store (local storage)
-    vector_store = FAISS.from_texts(texts, embedding_model, metadatas=metadatas)
+    # Step 2: Connect to ChromaDB running on your EC2 (update host/port if needed)
+    if not CHROMA_HOST:
+        raise ValueError("CHROMA_HOST not set")
+    if not CHROMA_PORT:
+        raise ValueError("CHROMA_PORT not set")
 
-    # Save locally using pickle
-    with open("local_embeddings.pkl", "wb") as f:
-        pickle.dump(vector_store, f)
+        # Construct the Chroma Settings object
+    chroma_settings = Settings(
+        chroma_api_impl="rest",
+        chroma_server_host=CHROMA_HOST,
+        chroma_server_http_port=int(CHROMA_PORT),
+    )
 
-    print("Embeddings have been stored locally!")
+    # Initialize the client with Settings
+    chroma_client = chromadb.HttpClient(settings=chroma_settings)
+
+    # Step 3: Create or get a collection
+    collection = chroma_client.get_or_create_collection(name="slack-faqs")
+
+    # Step 4: Add the embeddings
+    collection.add(
+        documents=texts,
+        metadatas=metadatas,
+        ids=ids,
+        embeddings=embeddings
+    )
+
+    print(f"{len(texts)} embeddings have been stored in ChromaDB on EC2!")
     return state
 
 
