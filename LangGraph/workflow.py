@@ -7,15 +7,26 @@ from langchain_together import ChatTogether
 import os
 from pydantic import BaseModel
 from fetch_db_messages import fetch_all_messages
-import pickle
+# import pickle  # no longer using locally stored embeddings
 import chromadb
-from chromadb import HttpClient
-from chromadb.config import Settings
 import numpy as np
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+# from langchain_community.vectorstores import FAISS # no longer using locally stored embeddings
+from chromadb.utils import embedding_functions
 
 api_key = os.getenv("TOGETHER_API_KEY")
+# Fetch host and port from env
+CHROMA_HOST = os.getenv("CHROMA_HOST")
+CHROMA_PORT = os.getenv("CHROMA_PORT")
+
+print("CHROMA_HOST:", repr(CHROMA_HOST))
+print("CHROMA_PORT:", repr(CHROMA_PORT))
+
+# Step 2: Connect to ChromaDB running on your EC2 (update host/port if needed)
+if not CHROMA_HOST:
+    raise ValueError("CHROMA_HOST not set")
+if not CHROMA_PORT:
+    raise ValueError("CHROMA_PORT not set")
 
 # Ensure API key is set
 if not api_key:
@@ -63,19 +74,6 @@ def create_and_store_embedding(state: QueryState):
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     embeddings = embedding_model.embed_documents(texts)
 
-    # Fetch host and port from env
-    CHROMA_HOST = os.getenv("CHROMA_HOST")
-    CHROMA_PORT = os.getenv("CHROMA_PORT")
-
-    print("CHROMA_HOST:", repr(CHROMA_HOST))
-    print("CHROMA_PORT:", repr(CHROMA_PORT))
-
-    # Step 2: Connect to ChromaDB running on your EC2 (update host/port if needed)
-    if not CHROMA_HOST:
-        raise ValueError("CHROMA_HOST not set")
-    if not CHROMA_PORT:
-        raise ValueError("CHROMA_PORT not set")
-
     print(f"Connecting to Chroma at http://{CHROMA_HOST}:{CHROMA_PORT}")
     # Initialize the client with settings
     chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
@@ -99,25 +97,29 @@ def create_and_store_embedding(state: QueryState):
     print(f"{len(texts)} embeddings have been stored in ChromaDB on EC2!")
     return state
 
-
-# Define step 3: Retrieve relevant context (Placeholder)
+# Step 3: Retrieve relevant context from ChromaDB
 def retrieve_context(state: QueryState):
-    # Load stored embeddings
-    with open("local_embeddings.pkl", "rb") as f:
-        vector_store = pickle.load(f)
+    # Connect to Chroma on EC2
+    client = chromadb.HttpClient(host=CHROMA_HOST, port=int(CHROMA_PORT))
+    collection = client.get_or_create_collection(name="slack-faqs")
 
-    # Generate embedding for the query
-    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    query_embedding = embedding_model.embed_query(state.question)
+    # Query Chroma for relevant messages
+    results = collection.query(
+        query_texts=[state.question],
+        n_results=5  # try 5 for more context
+    )
 
-    # Search for relevant messages
-    results = vector_store.similarity_search_by_vector(query_embedding, k=3)  # Top 3 matches
+    # Join retrieved documents
+    documents = results.get("documents", [[]])[0]
+    context = "\n\n".join(documents)
 
-    # Format results for LLM response
-    context = "\n".join([res.metadata["text"] for res in results])
-    print(f"Retrieved Context:\n{context}")
+    print(f"Retrieved Context from Chroma:\n{context}")
 
-    return QueryState(question=state.question, category=state.category, response=context)
+    return QueryState(
+        question=state.question,
+        category=state.category,
+        response=context
+    )
 
 
 # Define step 4: Generate response
@@ -125,11 +127,11 @@ def generate_response(state: QueryState):
 
     # Compose a detailed prompt incorporating the question, its category, and retrieved context.
     prompt = (
-        f"You are a helpful assistant. "
+        f"You are a helpful Slackbot assistant, trained on FAQS at Rewriting the Code. "
         f"Here is the question: \"{state.question}\".\n\n"
         f"It has been categorized as: \"{state.category}\".\n\n"
         f"Relevant context from previous messages:\n{state.response}\n\n"
-        f"Based on the above, please provide a comprehensive and context-aware answer."
+        f"Please provide a comprehensive and context-aware answer by only using the provided information. If you don't know the answer, say \"I'm not sure.\" Do not make up details."
     )
     
     # Use the LLM to generate the final answer (using .invoke() as per deprecation notice)
