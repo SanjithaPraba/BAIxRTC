@@ -24,7 +24,10 @@ rag_bot = graph.compile()
 
 # Example: Running the workflow
 def test_query_workflow():
-    input_question = QueryState(question="I know that RTC has certain affinity groups. I will DM you the information needed.")
+    # intended to be a message that the llm DOES NOT respond to
+    # input_question = QueryState(question="I know that RTC has certain affinity groups. I will DM you the information needed.")
+    # intended to be a message that the llm DOES respond to
+    input_question = QueryState(question="Does RTC have any affinity groups? If so, for what groups?")
     response = rag_bot.invoke(input_question)
     print(response)
 
