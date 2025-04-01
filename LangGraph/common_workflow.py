@@ -83,8 +83,13 @@ def create_and_store_embedding(state: QueryState):
         metadatas.append({"text": message, "category": category})
         ids.append(f"msg_{i}")
     embeddings = embedding_model.embed_documents(texts)
+
+    collection = chroma_client.get_or_create_collection(name="slack-faqs")
     collection.add(documents=texts, metadatas=metadatas, ids=ids, embeddings=embeddings)
-    return state
+
+    print(f"Stored {len(texts)} embeddings in ChromaDB.")
+
+    return state, ids
 
 def should_respond(state: QueryState) -> QueryState:
     decision_prompt = f"""
@@ -102,3 +107,20 @@ Answer with ONLY 'yes' or 'no'. Do not explain.
     else:
         state.category = "skip"
     return state
+
+def inspect_embeddings(ids=None):
+    collection = chroma_client.get_or_create_collection(name="slack-faqs")
+
+    # Get all if no specific IDs provided
+    if ids is None:
+        data = collection.get(include=["embeddings", "documents", "metadatas"])
+    else:
+        data = collection.get(ids=ids, include=["embeddings", "documents", "metadatas"])
+
+    for doc, meta, embed in zip(data["documents"], data["metadatas"], data["embeddings"]):
+        print("Document:", doc)
+        print("Metadata:", meta)
+        print("Embedding (first 5 dims):", embed[:5])
+        print("------")
+
+    return data
