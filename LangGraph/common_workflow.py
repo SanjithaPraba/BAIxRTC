@@ -65,7 +65,7 @@ def generate_response(state: QueryState):
         
         Relevant context from previous messages: {state.response}
         
-        Please provide a comprehensive and context-aware answer by only using the provided information. If you don't know the answer, say \"I'm not sure.\" Do not make up details.
+        Please provide a comprehensive and context-aware answer by only using the provided information but DO NOT directly mention that you are referencing the context provided. Treat it as if it is knowledge you are passing along to the user in order to help out. If you don't know the answer, say \"I'm not sure.\" Do not make up details.
         """
     
     # Use the LLM to generate the final answer (using .invoke() as per deprecation notice)
