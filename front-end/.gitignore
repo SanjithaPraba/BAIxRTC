@@ -1,0 +1,15 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+
+# Production builds
+out/
+
+# Environment variables
+.env
+.env.*  # if you have .env.local, .env.production, etc.
+
+# Optional: lock files you don’t want to commit (though usually you do commit them)
+# package-lock.json or yarn.lock

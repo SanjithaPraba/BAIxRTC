@@ -1,0 +1,201 @@
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+    "Helvetica Neue", sans-serif;
+  background-color: #f8f8f8;
+  color: #000000;
+  line-height: 1.5;
+}
+
+/* Container and layout */
+.container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.divider {
+  border-top: 1px solid #cac5c5;
+  margin: 3rem 0;
+}
+
+/* Typography */
+.title {
+  color: #ff5900;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  color: #ff5900;
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+.item-title {
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 4rem;
+}
+
+/* Cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 4px;
+  border: 1px solid #cac5c5;
+  text-align: center;
+}
+
+.card-title {
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.card-value {
+  color: #5d5c5c;
+}
+
+/* Update Data Section */
+.update-data-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .update-data-container {
+    flex-direction: row;
+  }
+}
+
+.update-data-item {
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .update-data-item:last-child {
+    margin-top: 0;
+  }
+}
+
+/* Toggle */
+.toggle-container {
+  margin-bottom: 1rem;
+}
+
+.toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-description {
+  color: #5d5c5c;
+  font-size: 0.875rem;
+}
+
+.toggle {
+  background-color: #ff5900;
+}
+
+/* Staff Info */
+.staff-info {
+  margin-top: 2rem;
+}
+
+.staff-name {
+  font-weight: 500;
+}
+
+.staff-tasks {
+  color: #5d5c5c;
+  font-size: 0.875rem;
+}
+
+/* Buttons */
+.button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button-outline {
+  background-color: white;
+  border: 1px solid #000000;
+  color: #000000;
+}
+
+.button-outline:hover {
+  background-color: #f1f1f1;
+}
+
+.button-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: white;
+  border: 1px solid #ff5900;
+  color: #ff5900;
+  margin-bottom: 2rem;
+}
+
+.button-edit:hover {
+  background-color: #fff8f5;
+}
+
+.button-primary {
+  background-color: #ff5900;
+  border: none;
+  color: white;
+  padding: 0.5rem 2rem;
+}
+
+.button-primary:hover {
+  background-color: #e65100;
+}
+
+.pencil-icon {
+  margin-left: 0.5rem;
+}
+
+/* Submit container */
+.submit-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 4rem;
+}
+
