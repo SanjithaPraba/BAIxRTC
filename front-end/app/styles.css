@@ -99,7 +99,7 @@ body {
   }
 }
 
-.update-data-item {
+/* .update-data-item {
   margin-bottom: 2rem;
 }
 
@@ -107,27 +107,13 @@ body {
   .update-data-item:last-child {
     margin-top: 0;
   }
-}
+} */
 
-/* Toggle */
-.toggle-container {
-  margin-bottom: 1rem;
-}
-
-.toggle-header {
+.update-data-column {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.toggle-description {
-  color: #5d5c5c;
-  font-size: 0.875rem;
-}
-
-.toggle {
-  background-color: #ff5900;
+  flex-direction: column;
+  align-items: flex-start; /* Ensure all content aligns left */
+  width: 50%;
 }
 
 /* Staff Info */
@@ -179,8 +165,9 @@ body {
 
 .button-primary {
   background-color: #ff5900;
-  border: none;
-  color: white;
+  border: solid;
+  border-color: #50142F;
+  color: #50142F;
   padding: 0.5rem 2rem;
 }
 
@@ -197,5 +184,91 @@ body {
   display: flex;
   justify-content: center;
   margin-top: 4rem;
+}
+
+/* Toggle Switch */
+.toggle-container {
+  margin-top: 32px;
+}
+
+.toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cac5c5;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: #ff5900;
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-description {
+  color: #5d5c5c;
+  font-size: 14px;
+}
+
+/* Date Inputs */
+.date-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-label {
+  margin-bottom: 8px;
+}
+
+.date-input {
+  border: 1px solid #5d5c5c;
+  padding: 4px 12px;
+  border-radius: 4px;
+  width: 160px;
 }
 

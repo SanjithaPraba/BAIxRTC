@@ -1,4 +1,3 @@
-import { Switch } from "@/components/ui/switch"
 import { Pencil } from "lucide-react"
 import "./styles.css"
 
@@ -44,23 +43,37 @@ export default function SlackbotSettings() {
           <h2 className="section-title">Update Data</h2>
 
           <div className="update-data-container">
-            <div className="update-data-item">
-              <p className="item-title">Manually upload JSON exports</p>
-              <button className="button button-outline">Choose Files</button>
+            <div className="update-data-column">
+              <p className="item-title">Manually  JSON exports</p>
+              <input type="file"/>
+
+              <div className="toggle-container">
+                <div className="toggle-header">
+                  <p className="item-title">Automatically upload messages real-time</p>
+                  <label className="toggle">
+                      <input type="checkbox" />
+                      <span className="toggle-slider"></span>
+                  </label>
+                </div>
+                <p className="toggle-description">When disabled, all updates happen after a manual upload</p>
+              </div>
             </div>
 
-            <div className="update-data-item">
+            <div className="update-data-column">
               <p className="item-title">Delete Data</p>
-              <button className="button button-outline">Delete Data</button>
-            </div>
-          </div>
 
-          <div className="toggle-container">
-            <div className="toggle-header">
-              <p className="item-title">Automatically upload messages real-time</p>
-              <Switch className="toggle" />
+              <div className="date-inputs">
+                <div className="date-input-group">
+                  <p className="date-label">From:</p>
+                  <input type="date" className="date-input" placeholder="mm/dd/yyyy" />
+                </div>
+                <div className="date-input-group">
+                  <p className="date-label">To:</p>
+                  <input type="date" className="date-input" placeholder="mm/dd/yyyy" />
+                </div>
+              </div>
+
             </div>
-            <p className="toggle-description">When disabled, all updates happen after a manual upload</p>
           </div>
         </section>
 
