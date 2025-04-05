@@ -17,12 +17,22 @@ slack_events_adapter = SlackEventAdapter(os.environ["SLACK_SIGNING_SECRET"], "/s
 client = slack.WebClient(token=os.environ["SLACK_TOKEN"])
 BOT_ID = client.api_call("auth.test")["user_id"]
 
+#read + respond to msges
 @slack_events_adapter.on('message')
 def message(payload):
     event = payload.get('event', {})
     channel_id = event.get('channel')
+    user_id = event.get('user')
+    text = event.get('text')
+    thread_ts = event.get('ts') or event.get('thread_ts')
 
-    client.chat_postMessage(channel=channel_id, text="Hello! I'm here to help you.")
+    state = QueryState(question=text)
+    state = should_respond(state)
+
+    if state.category == "should respond" and BOT_ID != user_id:
+        state = retrieve_context(state)
+        state = generate_response(state)
+        client.chat_postMessage(channel=channel_id, text=state.response, thread_ts=thread_ts)
 
 @app.route('/help', methods=['POST']) #command for intro for the slack bot
 def help():
