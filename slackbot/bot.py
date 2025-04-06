@@ -6,7 +6,7 @@ from flask import Flask
 from slackeventsapi import SlackEventAdapter
 import sys
 sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC") 
-from LangGraph.common_workflow import QueryState, retrieve_context, generate_response, should_respond
+from LangGraph.query_workflow import QueryState, retrieve_context, generate_response, should_respond
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path) #load env vars
