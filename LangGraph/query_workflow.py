@@ -1,3 +1,5 @@
+import sys
+sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC/LangGraph") 
 from langgraph.graph import StateGraph
 from common_workflow import QueryState, should_respond, retrieve_context, generate_response
 
@@ -29,7 +31,7 @@ def test_query_workflow():
     # intended to be a message that the llm DOES respond to
     input_question = QueryState(question="Does RTC have any affinity groups? If so, for what groups?")
     response = rag_bot.invoke(input_question)
-    print(response)
+    print(response.get("response"))
 
 if __name__ == "__main__":
     test_query_workflow()

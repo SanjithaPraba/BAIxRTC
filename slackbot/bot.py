@@ -6,7 +6,7 @@ from flask import Flask
 from slackeventsapi import SlackEventAdapter
 import sys
 sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC") 
-from LangGraph.query_workflow import QueryState, retrieve_context, generate_response, should_respond
+from LangGraph.query_workflow import QueryState, retrieve_context, generate_response, should_respond, rag_bot
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path) #load env vars
@@ -23,16 +23,13 @@ def message(payload):
     event = payload.get('event', {})
     channel_id = event.get('channel')
     user_id = event.get('user')
-    text = event.get('text')
+    text = str(event.get('text'))
     thread_ts = event.get('ts') or event.get('thread_ts')
 
-    state = QueryState(question=text)
-    state = should_respond(state)
-
-    if state.category == "should respond" and BOT_ID != user_id:
-        state = retrieve_context(state)
-        state = generate_response(state)
-        client.chat_postMessage(channel=channel_id, text=state.response, thread_ts=thread_ts)
+    question = QueryState(question=text)
+    result_state = rag_bot.invoke(question)
+    if BOT_ID != user_id:
+        client.chat_postMessage(channel=channel_id, text=result_state.get("response"), thread_ts=thread_ts)
 
 @app.route('/help', methods=['POST']) #command for intro for the slack bot
 def help():
