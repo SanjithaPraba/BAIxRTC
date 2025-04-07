@@ -1,6 +1,6 @@
 import { Pencil } from "lucide-react"
 import "./styles.css"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Update } from "next/dist/build/swc/types";
 
 export default function SlackbotSettings() {
@@ -82,6 +82,33 @@ export default function SlackbotSettings() {
 
 {/* Current Data State Section */}
 function DatabaseState() {
+
+  // state for db
+  const [info, setInfo] = useState({
+    lastUpload: "XX/XX/XX",
+    dateRange: "XX/XX/XX - XX/XX/XX",
+    awsUsage: "XX / XX MB",
+    chromaUsage: "XX / XX MB",
+  });
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const response = await fetch("https://localhost:5000/db");
+        if (response.ok) {
+          const data = await response.json();
+          setInfo(data);
+        } else {
+          console.error("Error fetching data");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchInfo();
+  }, []); // should only run once during component mount
+
   return(
   <div>
     {/* get information via get request to flask  */}
@@ -91,22 +118,22 @@ function DatabaseState() {
       <div className="card-grid">
         <div className="card">
           <p className="card-title">Last Upload</p>
-          <p className="card-value">XX/XX/XX</p>
+          <p className="card-value">{info.lastUpload}</p>
         </div>
 
         <div className="card">
             <p className="card-title">Stored Messages From</p>
-            <p className="card-value">XX/XX/XX - XX/XX/XX</p>
+            <p className="card-value">{info.dateRange}</p>
         </div>
 
         <div className="card">
           <p className="card-title">AWS Storage Usage</p>
-          <p className="card-value">XX MB / XX MB</p>
+          <p className="card-value">{info.awsUsage}</p>
         </div>
 
         <div className="card">
           <p className="card-title">ChromaDB Storage Usage</p>
-          <p className="card-value">XX MB / XX MB</p>
+          <p className="card-value">{info.chromaUsage}</p>
         </div>
       </div>
     </section>  
