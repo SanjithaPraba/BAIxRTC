@@ -21,21 +21,27 @@ BOT_ID = client.api_call("auth.test")["user_id"]
 @slack_events_adapter.on('message')
 def message(payload):
     event = payload.get('event', {})
-    channel_id = event.get('channel')
+    event_id = payload.get('event_id')
     user_id = event.get('user')
+    
+    # Ignore bot messages and messages without user_id
+    if event.get('subtype') == 'bot_message' or user_id == BOT_ID or user_id is None:
+        return
+
+    print(f"Processing event_id: {event_id}")
+
+    channel_id = event.get('channel')
     text = str(event.get('text'))
     thread_ts = event.get('ts') or event.get('thread_ts')
 
     question = QueryState(question=text)
     result_state = rag_bot.invoke(question)
-    if result_state.get("response") and user_id != BOT_ID:
+    if result_state.get("response"):
         client.chat_postMessage(
             channel=channel_id,
             text=result_state.get("response"),
             thread_ts=thread_ts
         )
-    else:
-        print("No response text to send to Slack!")
 
 @app.route('/help', methods=['POST']) #command for intro for the slack bot
 def help():
