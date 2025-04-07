@@ -28,8 +28,14 @@ def message(payload):
 
     question = QueryState(question=text)
     result_state = rag_bot.invoke(question)
-    if BOT_ID != user_id:
-        client.chat_postMessage(channel=channel_id, text=result_state.get("response"), thread_ts=thread_ts)
+    if result_state.get("response") and user_id != BOT_ID:
+        client.chat_postMessage(
+            channel=channel_id,
+            text=result_state.get("response"),
+            thread_ts=thread_ts
+        )
+    else:
+        print("No response text to send to Slack!")
 
 @app.route('/help', methods=['POST']) #command for intro for the slack bot
 def help():
