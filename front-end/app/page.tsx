@@ -5,6 +5,14 @@ import { Update } from "next/dist/build/swc/types";
 
 export default function SlackbotSettings() {
 
+  //type declaration for value type in handleSubmit)
+  type FormDataType = {
+    jsonExport: File | null;
+    autoUpload: boolean;
+    deleteFrom: string;
+    deleteTo: string;
+  };
+
   // State for form inputs 
   const [formData, setFormData] = useState({
     jsonExport: null,
@@ -19,15 +27,18 @@ export default function SlackbotSettings() {
 
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formDataToSend.append(key, value);
-      } else {
-        formDataToSend.append(key, value);
+      if (typeof value === "string") {
+        formDataToSend.append(key, value as string);
       }
+      else if (typeof value === "boolean") {
+        formDataToSend.append(key, String(value));
+      } else if (key === "jsonExport" && value !== null && (value as any) instanceof Blob) {
+        formDataToSend.append(key, value as Blob);
+      } 
     });
   
   try {
-    const response = await fetch("/your-flask-endpoint", {
+    const response = await fetch("https:localhost:5000/db", {
       method: "POST",
       body: formDataToSend,
     });
