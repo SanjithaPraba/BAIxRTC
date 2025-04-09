@@ -1,58 +1,10 @@
+"use client";
 import { Pencil } from "lucide-react"
 import "./styles.css"
 import { useState, useEffect } from "react"
 import { Update } from "next/dist/build/swc/types";
 
 export default function SlackbotSettings() {
-
-  //type declaration for value type in handleSubmit)
-  type FormDataType = {
-    jsonExport: File | null;
-    autoUpload: boolean;
-    deleteFrom: string;
-    deleteTo: string;
-  };
-
-  // State for form inputs 
-  const [formData, setFormData] = useState({
-    jsonExport: null,
-    autoUpload: false,
-    deleteFrom: "",
-    deleteTo: "",
-  });
-
-  // Handle form submission to Flask
-  const handleSubmit = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-
-    const formDataToSend = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (typeof value === "string") {
-        formDataToSend.append(key, value as string);
-      }
-      else if (typeof value === "boolean") {
-        formDataToSend.append(key, String(value));
-      } else if (key === "jsonExport" && value !== null && (value as any) instanceof Blob) {
-        formDataToSend.append(key, value as Blob);
-      } 
-    });
-  
-  try {
-    const response = await fetch("https:localhost:5000/db", {
-      method: "POST",
-      body: formDataToSend,
-    });
-    if (response.ok) {
-      alert("Changes submitted successfully!");
-    } else {
-      alert("Error submitting changes!");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Error submitting changes!");
-  }
-};
-
   return (
     <div className="container">
       <div className="content">
@@ -65,15 +17,11 @@ export default function SlackbotSettings() {
 
         {/* Update Data Section */}
         {/* formData is populated by UpdateDatabase component */}
-        <UpdateDatabase formData={formData} setFormData={setFormData}/>
+        <UpdateDatabase/>
         <div className="divider"></div>
 
         {/* Update Task Escalation Section */}
         <StaffInformation/>
-
-        <div className="submit-container">
-          <button className="button button-primary">SUBMIT CHANGES</button>
-        </div>
 
       </div>
     </div>
@@ -94,7 +42,7 @@ function DatabaseState() {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const response = await fetch("https://localhost:5000/db");
+        const response = await fetch("https://localhost:5000/api/db");
         if (response.ok) {
           const data = await response.json();
           setInfo(data);
@@ -141,19 +89,54 @@ function DatabaseState() {
   );
 }
 
-interface UpdateDatabaseProps {
-  formData: { jsonExport: File | null; autoUpload: boolean; deleteFrom: string; deleteTo: string };
-  setFormData: React.Dispatch<React.SetStateAction<any>>; // The type of setFormData is the dispatch function from useState
-}
+function UpdateDatabase() {
 
-function UpdateDatabase({formData, setFormData} : UpdateDatabaseProps) {
+    // State for form inputs 
+    const [formData, setFormData] = useState({
+      jsonExport: null,
+      autoUpload: false,
+      deleteFrom: "",
+      deleteTo: "",
+    });
+  
+    // Handle form submission to Flask
+    const handleSubmit = async (e: React.FormEvent<HTMLButtonElement>) => {
+      e.preventDefault(); //stops form from instantly submitting
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (typeof value === "string") {
+          formDataToSend.append(key, value as string);
+        }
+        else if (typeof value === "boolean") {
+          formDataToSend.append(key, String(value));
+        } else if (key === "jsonExport" && value !== null && (value as any) instanceof Blob) {
+          formDataToSend.append(key, value as Blob);
+        } 
+      });
+    
+      try {
+        const response = await fetch("https:localhost:5000/api/db", {
+          method: "POST",
+          body: formDataToSend,
+        });
+        if (response.ok) {
+          alert("Changes submitted successfully!");
+        } else {
+          alert("Error submitting changes!");
+        }
+        
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error submitting changes!");
+      }
+  };
 
   // Handle file change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
 
     if (files && files[0]) {
-      setFormData((prevState: FormData) => ({
+      setFormData((prevState) => ({
         ...prevState,
         [name]: files[0],
       }));
@@ -163,7 +146,7 @@ function UpdateDatabase({formData, setFormData} : UpdateDatabaseProps) {
   // Handle checkbox change
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData((prevState: FormData) => ({
+    setFormData((prevState) => ({
       ...prevState,
       [name]: checked,
     }));
@@ -172,7 +155,7 @@ function UpdateDatabase({formData, setFormData} : UpdateDatabaseProps) {
   // Handle input change for text and date inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prevState: FormData) => ({
+    setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
@@ -215,8 +198,12 @@ function UpdateDatabase({formData, setFormData} : UpdateDatabaseProps) {
             </div>
           </div>
         </div>
-
+        
+        <div className="submit-container">
+          <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
+        </div>
       </div>
+
     </section>
   </div>
   );
@@ -224,24 +211,92 @@ function UpdateDatabase({formData, setFormData} : UpdateDatabaseProps) {
 
 function StaffInformation() {
 
-  const allowEdits = (e: React.ChangeEvent<HTMLInputElement>) => {
-    {/* allow user to edit staff info, divs turn into input boxes */}
+  const [isEditing, setIsEditing] = useState(false);
+  const [staffList, setStaffList] = useState<{ name: string; tasks: string[] }[]>([]);
+
+  useEffect(() => { // initial get + display staff list
+    const fetchStaffList = async () => {
+      try {
+        const response = await fetch("https://localhost:5000/api/staff")
+        if (response.ok) {
+          const data = await response.json();
+          setStaffList(data);
+        }
+      } catch {
+        console.error("Error fetching staff list");
+      }
+    }
+
+    fetchStaffList();
+  }, []);
+
+  const handleEdit = () => { // toggles edit mode
+    setIsEditing(!isEditing);
   }
+
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: string ) => {
+  //   const updatedStaff = [... staffList];
+  //   updatedStaff[index]: {
+  //     ...updatedStaff[index],
+  //     [field]: e.target.value
+  //   };
+  //   setStaffList(updatedStaff);
+  // }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLButtonElement>) => {
+    e.preventDefault(); //stops form from instantly submitting
+    const formDataToSend = new FormData();
+    Object.entries(staffList).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        formDataToSend.append(key, value as string);
+      }
+    });
+  
+    try {
+      const response = await fetch("https:localhost:5000/api/staff", {
+        method: "POST",
+        body: formDataToSend,
+      });
+      if (response.ok) {
+        alert("Changes submitted successfully!");
+      } else {
+        alert("Error submitting changes!");
+      }
+      
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error submitting changes!");
+    }
+  };
+
   return(
   <div>
     {/* Update Task Escalation Section */}
     <section className="section">
         <h2 className="section-title">Update Task Escalation</h2>
 
-        <button className="button button-edit">
-          Edit Staff Information <Pencil size={16} className="pencil-icon" />
+        <button className="button button-edit" onClick={handleEdit}>
+          {isEditing ? "Edit Staff Information" : "Save Staff Information"} <Pencil size={16} className="pencil-icon" />
         </button>
 
         <div className="staff-info">
-          <p className="staff-name">Jane Doe</p>
-          <input autoFocus type="text"/>
-          <p className="staff-tasks">Tasks: Member Support, Scholarships</p>
+        {isEditing ? 
+          <div>
+            <input className="staff-name" autoFocus type="text"/>
+            <input className="staff-tasks" autoFocus type="text"/>
+          </div>
+        :
+          <div>
+            <p className="staff-name">Jane Doe</p>
+            <p className="staff-tasks">Tasks: Member Support, Scholarships</p>
+          </div>
+        }
         </div>
+
+        <div className="submit-container">
+          <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
+        </div>
+
     </section>
   </div>
   );
