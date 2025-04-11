@@ -39,23 +39,23 @@ function DatabaseState() {
     chromaUsage: "XX / XX MB",
   });
 
-  useEffect(() => {
-    const fetchInfo = async () => {
-      try {
-        const response = await fetch("https://localhost:5000/api/db");
-        if (response.ok) {
-          const data = await response.json();
-          setInfo(data);
-        } else {
-          console.error("Error fetching data");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchInfo = async () => {
+  //     try {
+  //       const response = await fetch("http://localhost:5000/api/db");
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setInfo(data);
+  //       } else {
+  //         console.error("Error fetching data");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //     }
+  //   };
 
-    fetchInfo();
-  }, []); // should only run once during component mount
+  //   fetchInfo();
+  // }, []); // should only run once during component mount
 
   return(
   <div>
@@ -115,7 +115,7 @@ function UpdateDatabase() {
       });
     
       try {
-        const response = await fetch("https:localhost:5000/api/db", {
+        const response = await fetch("http:localhost:5000/api/db", {
           method: "POST",
           body: formDataToSend,
         });
@@ -212,7 +212,7 @@ function UpdateDatabase() {
 interface StaffMember {
   name: string;
   tasks: string;
-  accountID: string;
+  accountId: string;
 }
 
 function StaffInformation() {
@@ -224,7 +224,7 @@ function StaffInformation() {
   useEffect(() => { // initial get + display staff list
     const fetchStaffList = async () => {
       try {
-        const response = await fetch("https://localhost:5000/api/staff")
+        const response = await fetch("http://localhost:5000/api/staff")
         if (response.ok) {
           const data = await response.json();
           setStaffList(data);
@@ -243,7 +243,7 @@ function StaffInformation() {
 
   // updates specific field for staff member
   // index for member, field for what to update, value
-  const handleInputChange = (index: number, field: "name" | "tasks" | "accountID", value:string) => {
+  const handleInputChange = (index: number, field: "name" | "tasks" | "accountId", value:string) => {
     setStaffList((prev) =>
       //loop through previous state of staff list
       prev.map((staff, i) =>
@@ -254,7 +254,7 @@ function StaffInformation() {
   };
 
   const addNewStaff = () => {
-    setStaffList((prev) => [...prev, {name: "", tasks: "", accountID: ""}]);
+    setStaffList((prev) => [...prev, {name: "", tasks: "", accountId: ""}]);
   };
 
   const handleSubmit = async () => {
@@ -305,9 +305,9 @@ function StaffInformation() {
                    <p className="input-description">Write task categories separated by comma (ex. Scholarships, Account Recovery, ..)</p>
                    <div className="staff-field"> 
                     <p>Account: </p>
-                    <input className="staff-account" type="text" value={staff.accountID}
-                    onChange={(e) => handleInputChange(index, "accountID", e.target.value)}
-                    placeholder={staff.accountID} autoFocus/>
+                    <input className="staff-account" type="text" value={staff.accountId}
+                    onChange={(e) => handleInputChange(index, "accountId", e.target.value)}
+                    placeholder={staff.accountId} autoFocus/>
                   </div>
               </div>
             ) : (
@@ -317,7 +317,7 @@ function StaffInformation() {
                 <p>Tasks: </p>
                 <p className="staff-tasks">{staff.tasks}</p>
                 <p>Account: </p>
-                <p className="staff-account">{staff.accountID}</p>
+                <p className="staff-account">{staff.accountId}</p>
               </div>
             )}
           </div>
