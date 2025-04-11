@@ -125,10 +125,10 @@ body {
   font-weight: 500;
 }
 
-.staff-tasks {
+/* .staff-tasks {
   color: #5d5c5c;
   font-size: 0.875rem;
-}
+} */
 
 /* Buttons */
 .button {
@@ -244,9 +244,9 @@ body {
   transform: translateX(20px);
 }
 
-.toggle-description {
+.description {
   color: #5d5c5c;
-  font-size: 14px;
+  font-size: 0.85rem;
 }
 
 /* Date Inputs */
@@ -270,5 +270,45 @@ body {
   padding: 4px 12px;
   border-radius: 4px;
   width: 160px;
+}
+
+/* .staff-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1rem; /* spacing between groups 
+} */
+
+.staff-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem; /* space between label and input */
+}
+
+.input-group p {
+  margin: 0 0 0.3rem;
+}
+
+.input-group input {
+  width: 100%;
+  max-width: 400px; /* optional */
+}
+
+.staff-field p {
+  margin: 0;
+  min-width: 80px; /* keeps labels aligned */
+}
+
+.staff-field input {
+  /*flex: 1; /* makes input grow to fill available space */
+  width: 50%;
+}
+
+.input-description {
+  color: #5d5c5c;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  margin-left: 80px; /* same as label min-width */
 }
 

@@ -180,7 +180,7 @@ function UpdateDatabase() {
                 <span className="toggle-slider"></span>
               </label>
             </div>
-            <p className="toggle-description">When disabled, all updates happen after a manual upload</p>
+            <p className="description">When disabled, all updates happen after a manual upload</p>
           </div>
         </div>
 
@@ -209,10 +209,17 @@ function UpdateDatabase() {
   );
 }
 
+interface StaffMember {
+  name: string;
+  tasks: string;
+  accountID: string;
+}
+
 function StaffInformation() {
 
+
   const [isEditing, setIsEditing] = useState(false);
-  const [staffList, setStaffList] = useState<{ name: string; tasks: string[] }[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
 
   useEffect(() => { // initial get + display staff list
     const fetchStaffList = async () => {
@@ -234,70 +241,101 @@ function StaffInformation() {
     setIsEditing(!isEditing);
   }
 
-  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: string ) => {
-  //   const updatedStaff = [... staffList];
-  //   updatedStaff[index]: {
-  //     ...updatedStaff[index],
-  //     [field]: e.target.value
-  //   };
-  //   setStaffList(updatedStaff);
-  // }
+  // updates specific field for staff member
+  // index for member, field for what to update, value
+  const handleInputChange = (index: number, field: "name" | "tasks" | "accountID", value:string) => {
+    setStaffList((prev) =>
+      //loop through previous state of staff list
+      prev.map((staff, i) =>
+        //new object, copy prev data, update with new value
+        i === index ? {...staff, [field]: value } : staff 
+      )
+    );
+  };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLButtonElement>) => {
-    e.preventDefault(); //stops form from instantly submitting
-    const formDataToSend = new FormData();
-    Object.entries(staffList).forEach(([key, value]) => {
-      if (typeof value === "string") {
-        formDataToSend.append(key, value as string);
-      }
-    });
-  
+  const addNewStaff = () => {
+    setStaffList((prev) => [...prev, {name: "", tasks: "", accountID: ""}]);
+  };
+
+  const handleSubmit = async () => {
     try {
-      const response = await fetch("https:localhost:5000/api/staff", {
+      const response = await fetch("http://localhost:5000/api/staff", {
         method: "POST",
-        body: formDataToSend,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(staffList),
       });
-      if (response.ok) {
-        alert("Changes submitted successfully!");
-      } else {
-        alert("Error submitting changes!");
-      }
-      
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Error submitting changes!");
+
+      if (!response.ok) throw new Error("Failed to save staff list");
+      alert("Staff list saved!");
+    } catch (err) {
+      console.error("Error saving:", err);
     }
   };
 
-  return(
-  <div>
-    {/* Update Task Escalation Section */}
-    <section className="section">
-        <h2 className="section-title">Update Task Escalation</h2>
+  return (
+    <div>
+      {/* Update Task Escalation Section */}
+      <section className="section">
+      <h2 className="section-title">Update Task Escalation</h2>
 
-        <button className="button button-edit" onClick={handleEdit}>
-          {isEditing ? "Edit Staff Information" : "Save Staff Information"} <Pencil size={16} className="pencil-icon" />
-        </button>
+      <button className="button button-edit" onClick={handleEdit}>
+        {isEditing ? "Done Editing" : "Edit Staff Information"}{" "}
+        <Pencil size={16} className="pencil-icon" />
+      </button>
 
-        <div className="staff-info">
-        {isEditing ? 
-          <div>
-            <input className="staff-name" autoFocus type="text"/>
-            <input className="staff-tasks" autoFocus type="text"/>
+      <div className="staff-info">
+        {staffList.map((staff, index) => (
+          <div key={index} className="staff-entry">
+            {isEditing ? (
+              <div>
+                  <div className="staff-field">
+                    <p>Name: </p>
+                    <input className="staff-name" type="text" value={staff.name}
+                    onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                    placeholder={staff.name} autoFocus/>
+                  </div>
+                  <div className="staff-field">
+                    <p>Tasks: </p>
+                    <input className="staff-tasks" type="text" value={staff.tasks}
+                    onChange={(e) => handleInputChange(index, "tasks", e.target.value)}
+                    placeholder={staff.tasks} autoFocus/>
+                   </div>
+                   <p className="input-description">Write task categories separated by comma (ex. Scholarships, Account Recovery, ..)</p>
+                   <div className="staff-field"> 
+                    <p>Account: </p>
+                    <input className="staff-account" type="text" value={staff.accountID}
+                    onChange={(e) => handleInputChange(index, "accountID", e.target.value)}
+                    placeholder={staff.accountID} autoFocus/>
+                  </div>
+              </div>
+            ) : (
+              <div>
+                <p>Name: </p>
+                <p className="staff-name">{staff.name}</p>
+                <p>Tasks: </p>
+                <p className="staff-tasks">{staff.tasks}</p>
+                <p>Account: </p>
+                <p className="staff-account">{staff.accountID}</p>
+              </div>
+            )}
           </div>
-        :
-          <div>
-            <p className="staff-name">Jane Doe</p>
-            <p className="staff-tasks">Tasks: Member Support, Scholarships</p>
-          </div>
-        }
-        </div>
+        ))}
+
+        {isEditing && (
+          <button className="button button-edit" onClick={addNewStaff}>
+            + Add Staff Member
+          </button>
+        )}        
+      </div>
 
         <div className="submit-container">
-          <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
+          <button className="button button-primary" onClick={handleSubmit}>
+            SUBMIT CHANGES
+          </button>
         </div>
-
-    </section>
-  </div>
+      </section>
+    </div>
   );
 }
