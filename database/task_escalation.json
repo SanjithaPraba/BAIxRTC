@@ -1,59 +1,52 @@
-[
-  {
-    "name": "Swadha Rai",
-    "tasks": [
-      "Member Account Questions/Recovery",
-      "Survey Gift Cards",
-      "Survey FAQs"
-    ],
-    "accountId": "U06R0R05D0U"
-  },
-  {
-    "name": "Angela Smith",
-    "tasks": [
-      "Member Account Questions/Recovery",
-      "Mentor Appointment FAQs"
-    ],
-    "accountId": "U0457NZQWHH"
-  },
-  {
-    "name": "Kate Dean-McKinney",
-    "tasks": [
-      "Member Account Questions/Recovery",
-      "Monthly Pulse Survey FAQs"
-    ],
-    "accountId": "U087LU9EX5F"
-  },
-  {
-    "name": "Kristin Austin",
-    "tasks": [
-      "Scholarship Coordinator (Conferences/Last Mile/Women in Tech Fund)"
-    ],
-    "accountId": "U032JKB09GT"
-  },
-  {
-    "name": "Sidney Lopez",
-    "tasks": [
-      "Summer Hubs Coordinator"
-    ],
-    "accountId": "U053U641Q68"
-  },
-  {
-    "name": "Jasmine Lunceford",
-    "tasks": [
-      "Newsletter Coordinator",
-      "General Events Coordinator",
-      "Affinity Groups Manager",
-      "Mentor Appointment FAQs",
-      "Unite & Ignite"
-    ],
-    "accountId": "U0406E2K54J"
-  },
-  {
-    "name": "Jade Wright",
-    "tasks": [
-      "UK/Ireland Questions"
-    ],
-    "accountId": "U079V91C9T8"
+{
+  "escalation_schema": {
+    "Member Account Questions/Recovery": {
+      "member_ids": ["U06R0R05D0U", "U0457NZQWHH", "U087LU9EX5F"],
+      "member_names": ["Swadha Rai", "Angela Smith", "Kate Dean-McKinney"]
+    },
+    "Survey Gift Cards": {
+      "member_ids": ["U06R0R05D0U"],
+      "member_names": ["Swadha Rai"]
+    },
+    "Survey FAQs": {
+      "member_ids": ["U06R0R05D0U"],
+      "member_names": ["Swadha Rai"]
+    },
+    "Mentor Appointment": {
+      "member_ids": ["U0457NZQWHH", "U0406E2K54J"],
+      "member_names": ["Angela Smith", "Jasmine Lunceford"]
+    },
+    "Scholarship": {
+      "member_ids": ["U032JKB09GT"],
+      "member_names": ["Kristin Austin"]
+    },
+    "Summer hubs": {
+      "member_ids": ["U053U641Q68"],
+      "member_names": ["Sidney Lopez"]
+    },
+    "Newsletter": {
+      "member_ids": ["U0406E2K54J"],
+      "member_names": ["Jasmine Lunceford"]
+    },
+    "General events": {
+      "member_ids": ["U0406E2K54J"],
+      "member_names": ["Jasmine Lunceford"]
+    },
+    "Affinity groups": {
+      "member_ids": ["U0406E2K54J"],
+      "member_names": ["Jasmine Lunceford"]
+    },
+    "Unite & ignite": {
+      "member_ids": ["U0406E2K54J"],
+      "member_names": ["Jasmine Lunceford"]
+    },
+    "UK/Ireland": {
+      "member_ids": ["U079V91C9T8"],
+      "member_names": ["Jade Wright"]
+    },
+    "Overflow": {
+      "member_ids": ["U06R0R05D0U", "U0457NZQWHH", "U087LU9EX5F", "U0406E2K54J"],
+      "member_names": ["Swadha Rai", "Angela Smith", "Kate Dean-McKinney", "Jasmine Lunceford"]
+    }
   }
-]
+}
