@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from slackeventsapi import SlackEventAdapter
 import sys
-sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC") 
+sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC")  # NEED TO FIX THIS 
 from LangGraph.query_workflow import QueryState, rag_bot
 
 env_path = Path('.') / '.env'
@@ -72,8 +72,8 @@ def reaction_added(payload):
     if not original_message['messages']:
         return
 
-    bot_message = original_message['messages'][0]
-    question_text = bot_message.get('text', '') 
+    message = original_message['messages'][0] #gets the user's question
+    question_text = message.get('text', '') 
    
     state = QueryState(question=question_text)
     result = rag_bot.invoke(state) 
@@ -88,10 +88,11 @@ def reaction_added(payload):
     next_index = (index + 1) % len(members)
     assigned_member = members[next_index]
 
-    category_data["last_assigned_index"] = next_index
+    category_data["last_assigned_index"] = next_index # assures that people are getting rotated
     with open(ESCALATION_FILE, 'w') as f:
         json.dump(escalation_data, f, indent=2)
 
+    # changed this to just a mention of the rtc staff member
     client.chat_postMessage(
         channel=channel_id,
         text=f"Escalating this to <@{assigned_member}> for **{category}**.",
