@@ -71,7 +71,7 @@ def generate_response(state: QueryState):
         """
     
     # Use the LLM to generate the final answer (using .invoke() as per deprecation notice)
-    final_response = llm.invoke(prompt).content.strip()
+    final_response = llm.invoke(prompt).content.strip() + " Please react with the appropriate emoji to indicate if this was helpful or not."
     
     return QueryState(question=state.question, category=state.category, response=final_response)
 
