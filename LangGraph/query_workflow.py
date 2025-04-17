@@ -1,7 +1,5 @@
-import sys
-sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC/LangGraph") 
 from langgraph.graph import StateGraph
-from common_workflow import QueryState, should_respond, retrieve_context, generate_response
+from .common_workflow import QueryState, should_respond, retrieve_context, generate_response
 
 graph = StateGraph(QueryState)
 

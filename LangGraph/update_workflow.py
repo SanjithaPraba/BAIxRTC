@@ -1,4 +1,4 @@
-from common_workflow import QueryState, create_and_store_embedding, inspect_embeddings
+from .common_workflow import QueryState, create_and_store_embedding, inspect_embeddings
 from langgraph.graph import StateGraph
 
 graph = StateGraph(QueryState)

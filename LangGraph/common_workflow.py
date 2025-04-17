@@ -4,9 +4,7 @@ from pydantic import BaseModel
 from langchain_together import ChatTogether
 import chromadb
 from langchain_huggingface import HuggingFaceEmbeddings
-import sys
-sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC/LangGraph") 
-from fetch_db_messages import fetch_all_messages
+from .fetch_db_messages import fetch_all_messages
 
 # Load env
 load_dotenv(dotenv_path='./.env')

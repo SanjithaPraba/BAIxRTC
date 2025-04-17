@@ -4,8 +4,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask
 from slackeventsapi import SlackEventAdapter
-import sys
-sys.path.append("c:/Users/shriy/OneDrive/Desktop/Experiential/projects/BAIxRTC")  # NEED TO FIX THIS 
 from LangGraph.query_workflow import QueryState, rag_bot
 
 env_path = Path('.') / '.env'
