@@ -6,7 +6,7 @@ from flask import Flask
 from slackeventsapi import SlackEventAdapter
 from slack_sdk import WebClient
 from dotenv import load_dotenv
-from LangGraph.query_workflow import QueryState, rag_bot
+from LangGraph.query_workflow import QueryState, rag_bot, invoke_question
 
 #load env vars
 env_path = Path('.') / '.env'
@@ -35,38 +35,45 @@ def update_escalation_data(data): # do we need this ..
 # using QueryState + rag_bot to classify the question
 # If it's a valid question (i.e., has a response), respond and react to the message.
 def classify_and_respond_to_message(channel_id, text, thread_ts):
-    question = QueryState(question=text)
-    result = rag_bot.invoke(question)
+    result = invoke_question(text)
+    print("🔍 classify_and_respond_to_message():")
+    print("  ➤ Question:", text)
+    print("  ➤ Should respond?", result.get("should_respond"))
+    print("  ➤ Response:", result.get("response"))
+    print("  ➤ Category (for escalation):", result.get("category"))
+
+    if not result.get("should_respond"):
+        return None, None
+
     category = result.get("category")
     response = result.get("response")
 
-    # query workflow will determine if it needs to respond to the message or not
     if response:
-        # post the bot repl
         reply = client.chat_postMessage(
             channel=channel_id,
             text=response,
             thread_ts=thread_ts
         )
-        # timestamp of the bots reply
         bot_ts = reply['ts']
 
-        # adding emojis to bot reply
         client.reactions_add(channel=channel_id, name="smile", timestamp=bot_ts)
         client.reactions_add(channel=channel_id, name="sob", timestamp=bot_ts)
 
-        # store category in message metadata (for dev only — not persistent)
         return bot_ts, category
 
     return None, None
 
 # escalate a message to the appropriate member based on category.
 def escalate_issue(channel_id, message_ts, category):
+    print("🚨 Escalating issue...")
+    print("  ➤ Using category:", category)
+
     escalation_data = load_escalation_data()
     schema = escalation_data.get("escalation_schema", {})
 
     if category not in schema:
         # DO NOT ACTUALLY SEND THIS TO SLACK LATER, LEAVING FOR DEBUGGING ATM
+        print(f"  ❌ Category '{category}' not found in escalation schema.")
         client.chat_postMessage(
             channel=channel_id,
             text=f"Could not find escalation category for *{category}*.",
@@ -77,6 +84,8 @@ def escalate_issue(channel_id, message_ts, category):
     category_data = schema[category]
     members = category_data["member_ids"]
     index = category_data["last_assigned_index"]
+    print("  ➤ Escalating to:", members[index])
+
     next_index = (index + 1) % len(members)
     assigned_member = members[next_index]
 

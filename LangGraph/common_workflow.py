@@ -31,7 +31,8 @@ collection = chroma_client.get_or_create_collection(name="slack-faqs")
 # Define the state schema
 class QueryState(BaseModel):
     question: str
-    category: str | None = None
+    category: str | None = None  # actual question category (used for escalation)
+    intent: str | None = None  # 'should_respond' or 'skip'
     response: str | None = None
 
 # Retrieve relevant context from ChromaDB
@@ -44,12 +45,18 @@ def retrieve_context(state: QueryState):
 
     # Join retrieved documents
     documents = results.get("documents", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+
+    # Assign the category from top result (you could do voting logic if needed)
+    extracted_category = metadatas[0].get("category") if metadatas else None
+    state.category = extracted_category
     context = "\n\n".join(documents)
 
     print(f"Retrieved Context from Chroma:\n{context}")
 
     return QueryState(
         question=state.question,
+        intent = state.intent,
         category=state.category,
         response=context
     )
@@ -65,13 +72,13 @@ def generate_response(state: QueryState):
         
         Relevant context from previous messages: {state.response}
         
-        Please provide a comprehensive and context-aware answer by only using the provided information but DO NOT directly mention that you are referencing the context provided. Treat it as if it is knowledge you are passing along to the user in order to help out. If you don't know the answer, say \"I'm not sure.\" Do not make up details.
+        Please provide a comprehensive and context-aware answer by only using the provided information but DO NOT directly mention that you are referencing the context provided. Treat it as if it is knowledge you are passing along to the user in order to help out. DO NOT  If you don't know the answer, say \"I'm not sure.\" Do not make up details.
         """
     
     # Use the LLM to generate the final answer (using .invoke() as per deprecation notice)
     final_response = llm.invoke(prompt).content.strip() + " Please react with the appropriate emoji to indicate if this was helpful or not."
     
-    return QueryState(question=state.question, category=state.category, response=final_response)
+    return QueryState(question=state.question, category=state.category, intent=state.intent, response=final_response)
 
 def create_and_store_embedding(state: QueryState):
     all_messages = fetch_all_messages()
@@ -103,9 +110,9 @@ Answer with ONLY 'yes' or 'no'. Do not explain.
 """
     answer = llm.invoke(decision_prompt).content.strip().lower()
     if answer.startswith("yes"):
-        state.category = "should_respond"
+        state.intent = "should_respond"
     else:
-        state.category = "skip"
+        state.intent = "skip"
     return state
 
 def inspect_embeddings(ids=None):
