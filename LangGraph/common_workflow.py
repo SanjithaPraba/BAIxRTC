@@ -5,6 +5,7 @@ from langchain_together import ChatTogether
 import chromadb
 from langchain_huggingface import HuggingFaceEmbeddings
 from .fetch_db_messages import fetch_all_messages
+from collections import Counter
 
 # Load env
 load_dotenv(dotenv_path='./.env')
@@ -46,13 +47,28 @@ def retrieve_context(state: QueryState):
     # Join retrieved documents
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
+    print("✅ Retrieved metadatas:", metadatas[0])
 
     # Assign the category from top result (you could do voting logic if needed)
-    extracted_category = metadatas[0].get("category") if metadatas else None
-    state.category = extracted_category
+    # extracted_category = metadatas[0].get("category") if metadatas else None
+    # state.category = extracted_category
     context = "\n\n".join(documents)
 
-    print(f"Retrieved Context from Chroma:\n{context}")
+    # Extract all categories from the top 20 results
+    categories = [meta.get("category") for meta in metadatas if meta.get("category")]
+
+    # Use majority voting to determine most relevant category
+    category_counts = Counter(categories)
+    most_common_category, count = category_counts.most_common(1)[0] if category_counts else (None, 0)
+
+    print(f"📊 Category votes: {category_counts}")
+    print(f"✅ Chosen category: {most_common_category}")
+
+    # Assign the best category based on majority
+    state.category = most_common_category
+
+    print(f"context from chroma: {context}")
+    print(f"🔎 Retrieved category: {state.category}")
 
     return QueryState(
         question=state.question,
