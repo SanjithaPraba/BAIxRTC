@@ -116,19 +116,6 @@ body {
   width: 50%;
 }
 
-/* Staff Info */
-.staff-info {
-  margin-top: 2rem;
-}
-
-.staff-name {
-  font-weight: 500;
-}
-
-/* .staff-tasks {
-  color: #5d5c5c;
-  font-size: 0.875rem;
-} */
 
 /* Buttons */
 .button {
@@ -181,7 +168,6 @@ body {
 
 /* Submit container */
 .submit-container {
-  display: flex;
   justify-content: center;
   margin-top: 4rem;
 }
@@ -195,7 +181,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
 }
 
 .toggle {
@@ -204,6 +189,8 @@ body {
   color: transparent;
   width: 44px;
   height: 24px;
+  margin-bottom: 0.75rem;
+  margin-left: 1rem;
 }
 
 .toggle input {
@@ -247,6 +234,8 @@ body {
 .description {
   color: #5d5c5c;
   font-size: 0.85rem;
+  margin-top: 0rem;
+  margin-bottom: 0.5rem
 }
 
 /* Date Inputs */
@@ -272,20 +261,6 @@ body {
   width: 160px;
 }
 
-/* .staff-field {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 1rem; /* spacing between groups 
-} */
-
-.staff-field {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  gap: 1rem; /* space between label and input */
-}
-
 .input-group p {
   margin: 0 0 0.3rem;
 }
@@ -295,9 +270,29 @@ body {
   max-width: 400px; /* optional */
 }
 
+.staff-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem; /* space between label and input */
+}
+
+/* .staff-item-indented {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  margin-left: 2rem;
+  gap: 1rem; 
+} */
+
+.staff-field {
+  color: #ff5900;
+  min-width: 100px; /* ensures all labels are same width */
+}
+
 .staff-field p {
   margin: 0;
-  min-width: 80px; /* keeps labels aligned */
+  /* min-width: 80px; keeps labels aligned */
 }
 
 .staff-field input {
@@ -305,10 +300,33 @@ body {
   width: 50%;
 }
 
-.input-description {
+/* Staff Info */
+.staff-info {
+  margin-top: 2rem;
+}
+
+.staff-name {
+  font-weight: 500;
+}
+
+
+/* Make p and input align visually */
+.staff-name,
+.staff-account,
+.staff-tasks {
+  flex: 1;
+}
+
+/* Optional: unify input & text look a bit */
+.staff-item input {
+  width: 100%;
+  padding: 0.3rem;
+  font-size: 1rem;
+}
+
+
+.task-description {
   color: #5d5c5c;
-  font-size: 0.85rem;
-  margin-top: 0.3rem;
-  margin-left: 80px; /* same as label min-width */
+  font-size: 0.85 rem;
 }
 

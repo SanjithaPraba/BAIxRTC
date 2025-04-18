@@ -182,7 +182,13 @@ function UpdateDatabase() {
             </div>
             <p className="description">When disabled, all updates happen after a manual upload</p>
           </div>
+
+          <div className="submit-container">
+          <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
         </div>
+        </div>
+
+        
 
         <div className="update-data-column">
           <p className="item-title">Delete Data</p>
@@ -197,10 +203,6 @@ function UpdateDatabase() {
               <input type="date" className="date-input" name="deleteTo" onChange={handleInputChange} placeholder="mm/dd/yyyy" />
             </div>
           </div>
-        </div>
-        
-        <div className="submit-container">
-          <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
         </div>
       </div>
 
@@ -284,40 +286,50 @@ function StaffInformation() {
         {isEditing ? "Done Editing" : "Edit Staff Information"}{" "}
         <Pencil size={16} className="pencil-icon" />
       </button>
+      <p className="task-description">
+        {isEditing? "Write task categories separated by comma (ex. Scholarships, Account Recovery, .." : ""}
+      </p>
 
       <div className="staff-info">
         {staffList.map((staff, index) => (
           <div key={index} className="staff-entry">
             {isEditing ? (
               <div>
-                  <div className="staff-field">
-                    <p>Name: </p>
+                  <div className="staff-item">
+                    <p className="staff-field">Name: </p>
                     <input className="staff-name" type="text" value={staff.name}
                     onChange={(e) => handleInputChange(index, "name", e.target.value)}
-                    placeholder={staff.name} autoFocus/>
+                    placeholder={staff.name}/>
                   </div>
-                  <div className="staff-field">
-                    <p>Tasks: </p>
-                    <input className="staff-tasks" type="text" value={staff.tasks}
-                    onChange={(e) => handleInputChange(index, "tasks", e.target.value)}
-                    placeholder={staff.tasks} autoFocus/>
-                   </div>
-                   <p className="input-description">Write task categories separated by comma (ex. Scholarships, Account Recovery, ..)</p>
-                   <div className="staff-field"> 
-                    <p>Account: </p>
+                  <div className="staff-item"> 
+                    <p className="staff-field">Account: </p>
                     <input className="staff-account" type="text" value={staff.accountId}
                     onChange={(e) => handleInputChange(index, "accountId", e.target.value)}
-                    placeholder={staff.accountId} autoFocus/>
+                    placeholder={staff.accountId}/>
                   </div>
+                  <div className="staff-item">
+                    <p className="staff-field">Tasks: </p>
+                    <input className="staff-tasks" type="text" value={staff.tasks}
+                    onChange={(e) => handleInputChange(index, "tasks", e.target.value)}
+                    placeholder={staff.tasks}/>
+                  </div>
+                  <div className="divider"></div>
               </div>
             ) : (
               <div>
-                <p>Name: </p>
-                <p className="staff-name">{staff.name}</p>
-                <p>Tasks: </p>
-                <p className="staff-tasks">{staff.tasks}</p>
-                <p>Account: </p>
-                <p className="staff-account">{staff.accountId}</p>
+                <div className="staff-item">
+                  <p className="staff-field">Name: </p>
+                  <p className="staff-name">{staff.name}</p>
+                </div>
+                <div className="staff-item">
+                  <p className="staff-field">Account: </p>
+                  <p className="staff-account">{staff.accountId}</p>
+                </div>
+                <div className="staff-item">
+                  <p className="staff-field">Tasks: </p>
+                  <p className="staff-tasks">{staff.tasks}</p>
+                </div>
+                <div className="divider"></div>
               </div>
             )}
           </div>
