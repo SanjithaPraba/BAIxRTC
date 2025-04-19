@@ -1,0 +1,124 @@
+{
+  "escalation_schema": {
+    "Member Account Questions/Recovery": {
+      "member_ids": [
+        "U06R0R05D0U",
+        "U0457NZQWHH",
+        "U087LU9EX5F"
+      ],
+      "member_names": [
+        "Swadha Rai",
+        "Angela Smith",
+        "Kate Dean-McKinney"
+      ],
+      "last_assigned_index": 1
+    },
+    "Survey Gift Cards": {
+      "member_ids": [
+        "U06R0R05D0U"
+      ],
+      "member_names": [
+        "Swadha Rai"
+      ],
+      "last_assigned_index": 0
+    },
+    "Survey FAQs": {
+      "member_ids": [
+        "U06R0R05D0U"
+      ],
+      "member_names": [
+        "Swadha Rai"
+      ],
+      "last_assigned_index": 0
+    },
+    "Mentor Appointment": {
+      "member_ids": [
+        "U0457NZQWHH",
+        "U0406E2K54J"
+      ],
+      "member_names": [
+        "Angela Smith",
+        "Jasmine Lunceford"
+      ],
+      "last_assigned_index": 0
+    },
+    "Scholarship": {
+      "member_ids": [
+        "U032JKB09GT"
+      ],
+      "member_names": [
+        "Kristin Austin"
+      ],
+      "last_assigned_index": 0
+    },
+    "Summer hubs": {
+      "member_ids": [
+        "U053U641Q68"
+      ],
+      "member_names": [
+        "Sidney Lopez"
+      ],
+      "last_assigned_index": 0
+    },
+    "Newsletter": {
+      "member_ids": [
+        "U0406E2K54J"
+      ],
+      "member_names": [
+        "Jasmine Lunceford"
+      ],
+      "last_assigned_index": 0
+    },
+    "General events": {
+      "member_ids": [
+        "U0406E2K54J"
+      ],
+      "member_names": [
+        "Jasmine Lunceford"
+      ],
+      "last_assigned_index": 0
+    },
+    "Affinity groups": {
+      "member_ids": [
+        "U0406E2K54J"
+      ],
+      "member_names": [
+        "Jasmine Lunceford"
+      ],
+      "last_assigned_index": 0
+    },
+    "Unite & ignite": {
+      "member_ids": [
+        "U0406E2K54J"
+      ],
+      "member_names": [
+        "Jasmine Lunceford"
+      ],
+      "last_assigned_index": 0
+    },
+    "UK/Ireland": {
+      "member_ids": [
+        "U079V91C9T8"
+      ],
+      "member_names": [
+        "Jade Wright"
+      ],
+      "last_assigned_index": 0
+    },
+    "Overflow": {
+      "member_ids": [
+        "U06R0R05D0U",
+        "U0457NZQWHH",
+        "U087LU9EX5F",
+        "U0406E2K54J"
+      ],
+      "member_names": [
+        "Swadha Rai",
+        "Angela Smith",
+        "Kate Dean-McKinney",
+        "Jasmine Lunceford"
+      ],
+      "last_assigned_index": 0
+    }
+  }
+}
