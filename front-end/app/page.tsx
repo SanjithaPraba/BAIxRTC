@@ -34,7 +34,7 @@ function DatabaseState() {
   // state for db
   const [info, setInfo] = useState({
     lastUpload: "XX/XX/XX",
-    dateRange: "XX/XX/XX - XX/XX/XX",
+    dateRange: "XXXX/XX/XX - XXXX/XX/XX",
     awsUsage: "XX / XX MB",
     chromaUsage: "XX / XX MB",
   });
@@ -65,7 +65,7 @@ function DatabaseState() {
 
       <div className="card-grid">
         <div className="card">
-          <p className="card-title">Last Upload</p>
+          <p className="card-title">Last Updated on</p>
           <p className="card-value">{info.lastUpload}</p>
         </div>
 
@@ -93,7 +93,7 @@ function UpdateDatabase() {
 
     // State for form inputs 
     const [formData, setFormData] = useState({
-      jsonExport: null,
+      jsonExport: [] as File[],
       autoUpload: false,
       deleteFrom: "",
       deleteTo: "",
@@ -109,8 +109,10 @@ function UpdateDatabase() {
         }
         else if (typeof value === "boolean") {
           formDataToSend.append(key, String(value));
-        } else if (key === "jsonExport" && value !== null && (value as any) instanceof Blob) {
-          formDataToSend.append(key, value as Blob);
+        } else if (key === "jsonExport" && Array.isArray(value)) {
+          value.forEach((file) => {
+            formDataToSend.append(key, file);
+          });
         } 
       });
     
@@ -135,12 +137,14 @@ function UpdateDatabase() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
 
-    if (files && files[0]) {
+    if (files && files.length > 0) {
+      const fileArray = Array.from (files);
       setFormData((prevState) => ({
         ...prevState,
-        [name]: files[0],
+        [name]: fileArray,
       }));
     }
+
   };
 
   // Handle checkbox change

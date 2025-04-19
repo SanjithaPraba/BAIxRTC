@@ -4,6 +4,8 @@ from flask_cors import CORS
 import os
 import json
 # from update_workflow import [used method for updating db]
+from datetime import datetime #get class from module - used to convert timsestamps
+from database.schema_manager import SchemaManager
 
 app = Flask(__name__)
 CORS(app)
@@ -11,33 +13,62 @@ CORS(app)
 # get information regarding state of database
 @app.route('/api/db', methods=['GET']) 
 def get_db_state():
-    db_state = None
-    # fetch most recent upload, time range of first + last upload
+    db_state = {}
+    #might have to store latest upload time in localstorage lol
+ 
+    # fetch time range of first + last upload + convert from ts to utc
+    schema_manager = SchemaManager()
+    first_date, last_date = schema_manager.get_timerange()
+    schema_manager.close_connection()
+    first_dt = datetime.fromtimestamp(int(float(first_date)))
+    last_dt = datetime.fromtimestamp(int(float(last_date)))
+    # turn into strings
+    first_str = first_dt.strftime("%m/%d/%Y")
+    last_str = last_dt.strftime("%m/%d/%Y")
+    # compile strings
+    date_range = f"{first_str} - {last_str}"
+    db_state["dateRange"] = date_range
+
     # fetch storage usage for both chromaDB + EC2, 
-    #fetch current json for staff info
+
     return jsonify(db_state)
 
 # pass changes inputted from react to langgraph
 @app.route('/api/db', methods=['POST']) 
 def handle_update():
-    # get values 
-    json_export = request.json.get('jsonExport')
+    #upload files to rtc_data, langgraph will run processing + upload scripts 
+    files = request.files.getlist("jsonExport")
+    new_upload = False
+    if (len(files) > 0):
+        new_upload = True
+        for file in files:
+            file.save(os.path.join("rtc_data", file.filename))
+
     #put in rtc_data, start langgraph flow   
-    auto_upload = request.json.get('autoUpload')  
+    auto_upload = request.form.get("autoUpload") == "true" #formdata forces it to be a string
+
+    #get dates for deletion - both will be "" or "YYYY-MM-DD"
     delete_from = request.json.get('deleteFrom')  
     delete_to = request.json.get('deleteTo') 
-    #get staff info
-    handle_db_update()
+    #convert dates to timestamp for db parsing 
+    delete_from_ts = date_to_unix(delete_from)
+    delete_to_ts = date_to_unix(delete_to, end_of_day=True)
 
-def handle_db_update():
-    #handle json
-        #either export schema_manager.py add_json function
-        #or add json to folder - how are processes being run?
-    #handle deletion
-        #schema_manager.py? or honestly directly connect to db and delete messages 
-    #handle upload
-        #langgraph 
-    return 
+    #call langgraph update workflow 
+        #build the querystate
+        #import the compiled workflow
+        #invoke the workflow with the querystate
+
+def date_to_unix(date_str, end_of_day=False):
+    if not date_str:
+        return ""
+    dt_format = "%Y-%m-%d" #format of input string
+    if end_of_day:
+        dt = datetime.strptime(date_str, dt_format).replace(hour=23, minute=59, second=59) #add on until EOD to date
+    else:
+        dt = datetime.strptime(date_str, dt_format).replace(hour=0, minute=0, second=0) # add on midnight to date
+    return int(dt.timestamp())  # Unix timestamp in seconds
+
 
 
 @app.route("/api/staff", methods=["GET"])
