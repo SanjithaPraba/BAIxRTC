@@ -3,7 +3,6 @@ import logging
 import os
 from pathlib import Path
 import json
-from datetime import datetime #get class from module
 
 class SchemaManager:
     """Handles database schema creation and updates."""
@@ -92,17 +91,21 @@ class SchemaManager:
         self.connection.close()
         logging.info("🔌 Database connection closed.")
 
-    #to be used for frontend - get the first and last timestamps, then convert to datetime
+    #to be used for frontend - get the first and last timestamps
     def get_timerange(self):
         self.cursor.execute("SELECT MAX(ts) FROM messages")
         latest_ts = self.cursor.fetchone()[0]
-        latest_date = datetime.fromtimestamp(latest_ts)
         self.cursor.execute("SELECT MIN(ts) FROM messages")
         earliest_ts = self.cursor.fetchone()[0]
-        earliest_date = datetime.fromtimestamp(earliest_ts)
-        return (str(earliest_date), str(latest_date))
+        return (earliest_ts, latest_ts)
+    
+     #params in unix timestamps
+    def delete_messages(self, delete_from, delete_to):
+        self.cursor.execute(
+        "DELETE FROM messages WHERE ts >= %s AND ts <= %s",
+        (delete_from, delete_to))
 
-# Example usage
+# Example usage 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     # Get the directory where this file (schema_manager.py) is located
