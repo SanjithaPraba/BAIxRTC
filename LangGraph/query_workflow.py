@@ -11,7 +11,7 @@ graph.set_entry_point("should_respond")
 
 # edges differ if the query should actually be responded to by the LLM!
 def route_response(state: QueryState) -> str:
-    return "retrieve_context" if state.category == "should_respond" else "end"
+    return "retrieve_context" if state.intent == "should_respond" else "end"
 
 graph.add_conditional_edges("should_respond", route_response, {
     "retrieve_context": "retrieve_context",
@@ -21,6 +21,16 @@ graph.add_conditional_edges("should_respond", route_response, {
 graph.add_edge("retrieve_context", "respond")
 
 rag_bot = graph.compile()
+
+def invoke_question(text):
+    input_question = QueryState(question=text)
+    final_state = rag_bot.invoke(input_question)
+
+    return {
+        "should_respond": final_state.get("intent") == "should_respond",
+        "response": final_state.get("response"),
+        "category": final_state.get("category")
+    }
 
 # Example: Running the workflow
 def test_query_workflow():
