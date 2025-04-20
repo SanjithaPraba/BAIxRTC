@@ -33,29 +33,38 @@ function DatabaseState() {
 
   // state for db
   const [info, setInfo] = useState({
-    lastUpload: "XX/XX/XX",
-    dateRange: "XXXX/XX/XX - XXXX/XX/XX",
+    // lastUpload: "XX/XX/XXXX",
+    dateRange: "XX/XX/XXXX - XX/XX/XXXX",
     awsUsage: "XX / XX MB",
     chromaUsage: "XX / XX MB",
   });
 
-  // useEffect(() => {
-  //   const fetchInfo = async () => {
-  //     try {
-  //       const response = await fetch("http://localhost:5000/api/db");
-  //       if (response.ok) {
-  //         const data = await response.json();
-  //         setInfo(data);
-  //       } else {
-  //         console.error("Error fetching data");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error:", error);
-  //     }
-  //   };
+  const[lastUpload, setLastUpload] = useState('XX/XX/XXXX')
 
-  //   fetchInfo();
-  // }, []); // should only run once during component mount
+  useEffect(() => {
+    // const fetchInfo = async () => {
+    //   try {
+    //     const response = await fetch("http://localhost:5000/api/db");
+    //     if (response.ok) {
+    //       const data = await response.json();
+    //       setInfo(data);
+    //     } else {
+    //       console.error("Error fetching data");
+    //     }
+    //   } catch (error) {
+    //     console.error("Error:", error);
+    //   }
+    // };
+
+    // fetchInfo();
+
+    //get date of when info was last uploaded
+      const date = localStorage.getItem('uploadDate');
+      if (date) {
+        setLastUpload(date);
+      }
+
+  }, []); // should only run once during component mount
 
   return(
   <div>
@@ -66,7 +75,8 @@ function DatabaseState() {
       <div className="card-grid">
         <div className="card">
           <p className="card-title">Last Updated on</p>
-          <p className="card-value">{info.lastUpload}</p>
+          {/* <p className="card-value">{info.lastUpload}</p> */}
+          <p className="card-value">{lastUpload}</p>
         </div>
 
         <div className="card">
@@ -94,13 +104,14 @@ function UpdateDatabase() {
     // State for form inputs 
     const [formData, setFormData] = useState({
       jsonExport: [] as File[],
-      autoUpload: false,
+      // autoUpload: false,
       deleteFrom: "",
       deleteTo: "",
     });
   
     // Handle form submission to Flask
     const handleSubmit = async (e: React.FormEvent<HTMLButtonElement>) => {
+      //handle input data
       e.preventDefault(); //stops form from instantly submitting
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
@@ -131,6 +142,11 @@ function UpdateDatabase() {
         console.error("Error:", error);
         alert("Error submitting changes!");
       }
+
+      //save time of upload 
+      const now = new Date();
+      const formattedDate = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${now.getFullYear()}`;
+      localStorage.setItem('uploadDate', formattedDate);
   };
 
   // Handle file change
@@ -147,14 +163,14 @@ function UpdateDatabase() {
 
   };
 
-  // Handle checkbox change
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: checked,
-    }));
-  };
+  // // Handle checkbox change
+  // const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { name, checked } = e.target;
+  //   setFormData((prevState) => ({
+  //     ...prevState,
+  //     [name]: checked,
+  //   }));
+  // };
 
   // Handle input change for text and date inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,17 +191,16 @@ function UpdateDatabase() {
           <p className="item-title">Manually upload JSON exports</p>
           <input type="file" multiple name="jsonExport" onChange={handleFileChange}/>
 
-          <div className="toggle-container">
+          {/* <div className="toggle-container">
             <div className="toggle-header">
               <p className="item-title">Automatically upload messages real-time</p>
               <label className="toggle">
-                {/* for toggle to be accurate state, formData needs to be populated in parent component*/}
                 <input type="checkbox" name="autoUpload" checked={formData.autoUpload} onChange={handleCheckboxChange}/>
                 <span className="toggle-slider"></span>
               </label>
             </div>
             <p className="description">When disabled, all updates happen after a manual upload</p>
-          </div>
+          </div> */}
 
           <div className="submit-container">
           <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
