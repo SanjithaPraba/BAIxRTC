@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import json
-# from update_workflow import [used method for updating db]
+from LangGraph.update_workflow import invoke_update
 from datetime import datetime #get class from module - used to convert timsestamps
 from database.schema_manager import SchemaManager
 
@@ -34,30 +34,48 @@ def get_db_state():
     return jsonify(db_state)
 
 # pass changes inputted from react to langgraph
-@app.route('/api/db', methods=['POST']) 
+@app.route('/api/db', methods=['POST'])
 def handle_update():
-    #upload files to rtc_data, langgraph will run processing + upload scripts 
-    files = request.files.getlist("jsonExport")
-    new_upload = False
-    if (len(files) > 0):
-        new_upload = True
-        for file in files:
-            file.save(os.path.join("rtc_data", file.filename))
+    # 1. save the uploaded files to rtc_data
+    uploaded_files = request.files.getlist("jsonExport")
+    saved_file_paths = []
 
-    #put in rtc_data, start langgraph flow   
-    auto_upload = request.form.get("autoUpload") == "true" #formdata forces it to be a string
+    if uploaded_files:
+        for file in uploaded_files:
+            save_path = os.path.join("rtc_data", file.filename)
+            file.save(save_path)
+            saved_file_paths.append(save_path)
 
-    #get dates for deletion - both will be "" or "YYYY-MM-DD"
-    delete_from = request.json.get('deleteFrom')  
-    delete_to = request.json.get('deleteTo') 
-    #convert dates to timestamp for db parsing 
-    delete_from_ts = date_to_unix(delete_from)
-    delete_to_ts = date_to_unix(delete_to, end_of_day=True)
+    # 2. get the form data values
+    auto_upload = request.form.get("autoUpload", "false") == "true"
+    delete_from = request.form.get("deleteFrom", "")
+    delete_to = request.form.get("deleteTo", "")
 
-    #call langgraph update workflow 
-        #build the querystate
-        #import the compiled workflow
-        #invoke the workflow with the querystate
+    # 3. convert to timestamps
+    delete_from_ts = date_to_unix(delete_from) if delete_from else None
+    delete_to_ts = date_to_unix(delete_to, end_of_day=True) if delete_to else None
+
+    # 4. open saved files as file-like objects (simulate FileStorage-like so update_workflow can invoke properly)
+    file_objects = []
+    try:
+        for path in saved_file_paths:
+            f = open(path, "rb")  # opened in binary mode
+            file_objects.append(f)
+
+        # 5. Call LangGraph workflow with opened files
+        result = invoke_update(
+            json_files=file_objects,
+            auto_upload=auto_upload,
+            delete_from=delete_from_ts,
+            delete_to=delete_to_ts
+        )
+
+    finally:
+        # 6. cleanup the file handles
+        for f in file_objects:
+            f.close()
+
+    return jsonify(result)
 
 def date_to_unix(date_str, end_of_day=False):
     if not date_str:

@@ -4,8 +4,13 @@ from pydantic import BaseModel
 from langchain_together import ChatTogether
 import chromadb
 from langchain_huggingface import HuggingFaceEmbeddings
+import database
 from .fetch_db_messages import fetch_all_messages
 from collections import Counter
+from typing import List
+from database.schema_manager import SchemaManager
+import json
+import uuid
 
 # Load env
 load_dotenv(dotenv_path='./.env')
@@ -29,12 +34,27 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 collection = chroma_client.get_or_create_collection(name="slack-faqs")
 
-# Define the state schema
+# Define the query state schema
 class QueryState(BaseModel):
     question: str
     category: str | None = None  # actual question category (used for escalation)
     intent: str | None = None  # 'should_respond' or 'skip'
     response: str | None = None
+
+# Define the update state schema
+class UpdateState(BaseModel):
+    json_files: List  # will contain Werkzeug FileStorage objects from Flask
+    auto_upload: bool = False
+    delete_from: str | None = None
+    delete_to: str | None = None
+    postgres_success: bool | None = None
+    chroma_success: bool | None = None
+
+    #For summary tracking
+    deleted_postgres_count: int = 0
+    deleted_chroma_count: int = 0
+    inserted_postgres_count: int = 0
+    inserted_chroma_count: int = 0
 
 # Retrieve relevant context from ChromaDB
 def retrieve_context(state: QueryState):
@@ -47,7 +67,7 @@ def retrieve_context(state: QueryState):
     # Join retrieved documents
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
-    print("✅ Retrieved metadatas:", metadatas[0])
+    print("Retrieved metadatas:", metadatas[0])
 
     # Assign the category from top result (you could do voting logic if needed)
     # extracted_category = metadatas[0].get("category") if metadatas else None
@@ -61,14 +81,14 @@ def retrieve_context(state: QueryState):
     category_counts = Counter(categories)
     most_common_category, count = category_counts.most_common(1)[0] if category_counts else (None, 0)
 
-    print(f"📊 Category votes: {category_counts}")
-    print(f"✅ Chosen category: {most_common_category}")
+    print(f"Category votes: {category_counts}")
+    print(f"Chosen category: {most_common_category}")
 
     # Assign the best category based on majority
     state.category = most_common_category
 
     print(f"context from chroma: {context}")
-    print(f"🔎 Retrieved category: {state.category}")
+    print(f"Retrieved category: {state.category}")
 
     return QueryState(
         question=state.question,
@@ -96,23 +116,71 @@ def generate_response(state: QueryState):
     
     return QueryState(question=state.question, category=state.category, intent=state.intent, response=final_response)
 
-def create_and_store_embedding(state: QueryState):
-    all_messages = fetch_all_messages()
+def create_and_store_embedding(files: list):
+    all_messages = []
+
+    # Load messages from uploaded files
+    for file in files:
+        file.seek(0)
+        raw = file.read().decode("utf-8")
+        parsed = json.loads(raw)
+        all_messages.extend(parsed)
+
     texts, metadatas, ids = [], [], []
+
     for i, item in enumerate(all_messages):
         message = item.get("text", "")
         category = item.get("category", "Unknown")
-        texts.append(f"text: {message}\ncategory: {category}")
-        metadatas.append({"text": message, "category": category})
-        ids.append(f"msg_{i}")
-    embeddings = embedding_model.embed_documents(texts)
 
+        # same formatting logic as original create_and_store_embedding
+        formatted = f"text: {message}\ncategory: {category}"
+        texts.append(formatted)
+        metadatas.append({"text": message, "category": category})
+        ids.append(str(uuid.uuid4()))
+
+    # Embed and store
+    embeddings = embedding_model.embed_documents(texts)
     collection = chroma_client.get_or_create_collection(name="slack-faqs")
     collection.add(documents=texts, metadatas=metadatas, ids=ids, embeddings=embeddings)
 
-    print(f"Stored {len(texts)} embeddings in ChromaDB.")
+    print(f"✅ Stored {len(texts)} embeddings from uploaded files in ChromaDB.")
 
-    return state, ids
+# def create_and_store_embedding(state: QueryState):
+#     all_messages = fetch_all_messages()
+#     texts, metadatas, ids = [], [], []
+#     for i, item in enumerate(all_messages):
+#         message = item.get("text", "")
+#         category = item.get("category", "Unknown")
+#         texts.append(f"text: {message}\ncategory: {category}")
+#         metadatas.append({"text": message, "category": category})
+#         ids.append(f"msg_{i}")
+#     embeddings = embedding_model.embed_documents(texts)
+#
+#     collection = chroma_client.get_or_create_collection(name="slack-faqs")
+#     collection.add(documents=texts, metadatas=metadatas, ids=ids, embeddings=embeddings)
+#
+#     print(f"Stored {len(texts)} embeddings in ChromaDB.")
+#
+#     return state, ids
+
+def delete_chroma_by_date(start_ts, end_ts):
+    chroma_client = chromadb.HttpClient(host="localhost", port=8000)
+    collection = chroma_client.get_or_create_collection("rtc")
+    results = collection.get(include=["metadatas", "documents"])
+
+    ids_to_delete = [
+        doc_id for doc_id, metadata in zip(results['ids'], results['metadatas'])
+        if metadata.get("timestamp") and start_ts <= metadata["timestamp"] <= end_ts
+    ]
+
+    if ids_to_delete:
+        collection.delete(ids=ids_to_delete)
+        print(f"Deleted {len(ids_to_delete)} entries from Chroma between {start_ts}–{end_ts}")
+        return len(ids_to_delete)
+    else:
+        print("No entries matched ChromaDB deletion range.")
+        return 0
+
 
 def should_respond(state: QueryState) -> QueryState:
     decision_prompt = f"""

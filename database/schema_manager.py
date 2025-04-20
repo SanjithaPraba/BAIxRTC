@@ -17,7 +17,7 @@ class SchemaManager:
         """Create all necessary tables for the Slack bot."""
         self.create_messages_table()
         self.connection.commit()
-        logging.info("✅ Database tables created successfully.")
+        logging.info("Database tables created successfully.")
 
     def create_messages_table(self):
         """Create the messages table with one row per message."""
@@ -102,8 +102,9 @@ class SchemaManager:
      #params in unix timestamps
     def delete_messages(self, delete_from, delete_to):
         self.cursor.execute(
-        "DELETE FROM messages WHERE ts >= %s AND ts <= %s",
-        (delete_from, delete_to))
+            "DELETE FROM messages WHERE ts >= %s AND ts <= %s RETURNING *",
+            (delete_from, delete_to))
+        return self.cursor.rowcount
 
 # Example usage 
 if __name__ == "__main__":
