@@ -8,7 +8,8 @@ from datetime import datetime #get class from module - used to convert timsestam
 from database.schema_manager import SchemaManager
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
 # get information regarding state of database
 @app.route('/api/db', methods=['GET']) 
@@ -92,6 +93,13 @@ def date_to_unix(date_str, end_of_day=False):
 
 @app.route("/api/staff", methods=["GET"])
 def get_staff_list():
+    print("✅ /api/staff endpoint was hit")
+    sample_data = [
+        {"name": "Emily", "tasks": "Support", "accountId": "emily123"},
+        {"name": "Alex", "tasks": "Scholarships", "accountId": "alex456"}
+    ]
+    return jsonify(sample_data)  # ✅ MUST be a proper Response
+
     json_path = os.path.join(os.path.dirname(__file__), "..", "database", "task_escalation.json")
 
     with open(json_path, "r") as file:

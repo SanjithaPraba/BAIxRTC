@@ -128,7 +128,7 @@ function UpdateDatabase() {
       });
     
       try {
-        const response = await fetch("http:localhost:5000/api/db", {
+        const response = await fetch("http://localhost:5000/api/db", {
           method: "POST",
           body: formDataToSend,
         });
@@ -238,7 +238,6 @@ interface StaffMember {
 
 function StaffInformation() {
 
-
   const [isEditing, setIsEditing] = useState(false);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
 
@@ -248,9 +247,12 @@ function StaffInformation() {
         const response = await fetch("http://localhost:5000/api/staff")
         if (response.ok) {
           const data = await response.json();
+          console.log("Fetched staff data:", data);
           setStaffList(data);
+        } else {
+          console.error("Failed to fetch: ", response.status);
         }
-      } catch {
+      } catch (error) {
         console.error("Error fetching staff list");
       }
     }
@@ -290,8 +292,8 @@ function StaffInformation() {
 
       if (!response.ok) throw new Error("Failed to save staff list");
       alert("Staff list saved!");
-    } catch (err) {
-      console.error("Error saving:", err);
+    } catch (error) {
+      console.error("Error saving:", error);
     }
   };
 
