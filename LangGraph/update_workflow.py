@@ -8,7 +8,6 @@ from typing import List
 # Define the update state schema
 class UpdateState(BaseModel):
     json_files: List  # will contain Werkzeug FileStorage objects from Flask
-    auto_upload: bool = False
     delete_from: str | None = None
     delete_to: str | None = None
     postgres_success: bool | None = None
@@ -21,6 +20,9 @@ class UpdateState(BaseModel):
     inserted_chroma_count: int = 0
 
 def update_chroma_db(state):
+    if not state.json_files:
+        print("Skipping Chroma upload: no files provided.")
+        return state
     try:
         create_and_store_embedding(state.json_files)
         state.chroma_success = True
@@ -30,6 +32,9 @@ def update_chroma_db(state):
     return state
 
 def update_postgres_db(state: UpdateState) -> UpdateState:
+    if not state.json_files:
+        print("Skipping Postgres upload: no files provided.")
+        return state
     schema_manager = None
     try:
         schema_manager = SchemaManager()
@@ -57,6 +62,9 @@ def update_postgres_db(state: UpdateState) -> UpdateState:
     return state
 
 def delete_postgres_node(state: UpdateState) -> UpdateState:
+    if not (state.delete_from and state.delete_to):
+        print("Skipping Postgres deletion: no date range provided.")
+        return state
     try:
         if state.delete_from and state.delete_to:
             schema_manager = SchemaManager()
@@ -70,6 +78,9 @@ def delete_postgres_node(state: UpdateState) -> UpdateState:
     return state
 
 def delete_chroma_node(state: UpdateState) -> UpdateState:
+    if not (state.delete_from and state.delete_to):
+        print("Skipping Chroma deletion: no date range provided.")
+        return state
     try:
         if state.delete_from and state.delete_to:
             count = delete_chroma_by_date(state.delete_from, state.delete_to)
@@ -93,38 +104,10 @@ graph.add_edge("update_chroma", END)
 
 update_bot = graph.compile()
 
-def invoke_update(json_files, auto_upload, delete_from, delete_to):
+def invoke_update(json_files, delete_from, delete_to):
     state = UpdateState(
         json_files=json_files,
-        auto_upload=auto_upload,
         delete_from=delete_from,
         delete_to=delete_to,
     )
     return update_bot.invoke(state)
-
-
-# ----old embed logic, may need it for finishing the upload embeddings ------
-# embed + store based on the info passed into it...
-# def store_and_inspect(state: QueryState):
-#     state, ids = create_and_store_embedding(state)
-#     inspect_embeddings(ids)  # view what was stored
-#     return state
-
-# uncomment if you don't want to inspect the embeddings that were uploaded
-# graph.add_node("store_embeddings", create_and_store_embedding)
-
-# included inspection and storing of embeddings
-
-#create schemamanager
-# schema_manager = SchemaManager()
-#
-# def process_and_upload_messages(state: QueryState, files):
-#     if (files):
-#         schema_manager.add_jsons() #upload msgs to aws db
-#         schema_manager.close_connection()
-#         state, ids = create_and_store_embedding(state)  #upload + embed to chromadb
-#     return state
-#
-#
-# graph.add_node("store_data", process_and_upload_messages)
-# graph.set_entry_point("store_data")

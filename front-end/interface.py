@@ -39,6 +39,8 @@ def handle_update():
     # 1. save the uploaded files to rtc_data
     uploaded_files = request.files.getlist("jsonExport")
     saved_file_paths = []
+    should_upload = bool(uploaded_files)
+
 
     if uploaded_files:
         for file in uploaded_files:
@@ -47,9 +49,9 @@ def handle_update():
             saved_file_paths.append(save_path)
 
     # 2. get the form data values
-    auto_upload = request.form.get("autoUpload", "false") == "true"
-    delete_from = request.form.get("deleteFrom", "")
-    delete_to = request.form.get("deleteTo", "")
+    delete_from = request.form.get("deleteFrom") # these are now set to booleans
+    delete_to = request.form.get("deleteTo")
+    should_delete = bool(delete_from and delete_to)
 
     # 3. convert to timestamps
     delete_from_ts = date_to_unix(delete_from) if delete_from else None
@@ -64,10 +66,9 @@ def handle_update():
 
         # 5. Call LangGraph workflow with opened files
         result = invoke_update(
-            json_files=file_objects,
-            auto_upload=auto_upload,
-            delete_from=delete_from_ts,
-            delete_to=delete_to_ts
+            json_files=uploaded_files if should_upload else [],
+            delete_from=delete_from_ts if should_delete else None,
+            delete_to=delete_to_ts if should_delete else None
         )
 
     finally:
