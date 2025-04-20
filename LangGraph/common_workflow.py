@@ -7,7 +7,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 import database
 from .fetch_db_messages import fetch_all_messages
 from collections import Counter
-from typing import List
 from database.schema_manager import SchemaManager
 import json
 import uuid
@@ -40,21 +39,6 @@ class QueryState(BaseModel):
     category: str | None = None  # actual question category (used for escalation)
     intent: str | None = None  # 'should_respond' or 'skip'
     response: str | None = None
-
-# Define the update state schema
-class UpdateState(BaseModel):
-    json_files: List  # will contain Werkzeug FileStorage objects from Flask
-    auto_upload: bool = False
-    delete_from: str | None = None
-    delete_to: str | None = None
-    postgres_success: bool | None = None
-    chroma_success: bool | None = None
-
-    #For summary tracking
-    deleted_postgres_count: int = 0
-    deleted_chroma_count: int = 0
-    inserted_postgres_count: int = 0
-    inserted_chroma_count: int = 0
 
 # Retrieve relevant context from ChromaDB
 def retrieve_context(state: QueryState):

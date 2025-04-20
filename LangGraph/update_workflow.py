@@ -1,7 +1,24 @@
-from .common_workflow import create_and_store_embedding, UpdateState, delete_chroma_by_date
+from .common_workflow import create_and_store_embedding, delete_chroma_by_date
 from langgraph.graph import StateGraph, END
 from database.schema_manager import SchemaManager
 import json
+from pydantic import BaseModel
+from typing import List
+
+# Define the update state schema
+class UpdateState(BaseModel):
+    json_files: List  # will contain Werkzeug FileStorage objects from Flask
+    auto_upload: bool = False
+    delete_from: str | None = None
+    delete_to: str | None = None
+    postgres_success: bool | None = None
+    chroma_success: bool | None = None
+
+    #For summary tracking
+    deleted_postgres_count: int = 0
+    deleted_chroma_count: int = 0
+    inserted_postgres_count: int = 0
+    inserted_chroma_count: int = 0
 
 def update_chroma_db(state):
     try:

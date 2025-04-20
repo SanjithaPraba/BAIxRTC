@@ -1,4 +1,4 @@
-from connection_pool import ConnectionPool
+from .connection_pool import ConnectionPool
 import logging
 import os
 from pathlib import Path
