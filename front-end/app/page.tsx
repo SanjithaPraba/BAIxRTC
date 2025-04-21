@@ -34,12 +34,12 @@ function DatabaseState() {
   // state for db
   const [info, setInfo] = useState({
     // lastUpload: "XX/XX/XXXX",
-    dateRange: "XX/XX/XXXX - XX/XX/XXXX",
-    awsUsage: "XX / XX MB",
-    chromaUsage: "XX / XX MB",
+    dateRange: "03/28/2023 - 01/17/2025",
+    awsUsage: "100000 messages",
+    chromaUsage: "100000 documents",
   });
 
-  const[lastUpload, setLastUpload] = useState('XX/XX/XXXX')
+  const[lastUpload, setLastUpload] = useState('04/10/2025')
 
   useEffect(() => {
     // const fetchInfo = async () => {

@@ -18,7 +18,6 @@ CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 @app.route('/api/db', methods=['GET']) 
 def get_db_state():
     db_state = {}
-    #might have to store latest upload time in localstorage lol
  
     # fetch time range of first + last upload + convert from ts to utc
     schema_manager = SchemaManager()
