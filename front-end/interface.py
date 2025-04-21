@@ -24,6 +24,8 @@ def get_db_state():
     schema_manager = SchemaManager()
     first_date, last_date = schema_manager.get_timerange()
     schema_manager.close_connection()
+    if not first_date or not last_date:
+        return jsonify({"error": "No data found in database"}), 404
     first_dt = datetime.fromtimestamp(int(float(first_date)))
     last_dt = datetime.fromtimestamp(int(float(last_date)))
     # turn into strings
