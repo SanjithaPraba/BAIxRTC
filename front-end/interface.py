@@ -99,11 +99,6 @@ def date_to_unix(date_str, end_of_day=False):
 @app.route("/api/staff", methods=["GET"])
 def get_staff_list():
     print("✅ /api/staff endpoint was hit")
-    sample_data = [
-        {"name": "Emily", "tasks": "Support", "accountId": "emily123"},
-        {"name": "Alex", "tasks": "Scholarships", "accountId": "alex456"}
-    ]
-    return jsonify(sample_data)  # ✅ MUST be a proper Response
 
     json_path = os.path.join(os.path.dirname(__file__), "..", "database", "task_escalation.json")
 
@@ -150,7 +145,6 @@ def update_staff_list():
         for member in staff_list:
             name = member["name"]
             account_id = member["accountId"]
-            # Convert comma-separated string to list
             tasks = [task.strip() for task in member["tasks"].split(",")]
             print(name)
 
@@ -158,20 +152,24 @@ def update_staff_list():
                 if task not in escalation_schema:
                     escalation_schema[task] = {
                         "member_ids": [],
-                        "member_names": [],
-                        "last_assigned_index": 0
+                        "member_names": []
                     }
-        
+
                 if account_id not in escalation_schema[task]["member_ids"]:
                     escalation_schema[task]["member_ids"].append(account_id)
 
                 if name not in escalation_schema[task]["member_names"]:
                     escalation_schema[task]["member_names"].append(name)
 
-        # Write to tasks.json
+        # Wrap it inside the top-level key "escalation_schema"
+        wrapped_schema = {
+            "escalation_schema": escalation_schema
+        }
+
+        # Write to task_escalation.json
         filepath = os.path.join(os.path.dirname(__file__), "../database/task_escalation.json")
         with open(filepath, "w") as f:
-            json.dump(escalation_schema, f, indent=2)
+            json.dump(wrapped_schema, f, indent=2)
 
         return jsonify({"message": "Task escalation schema updated successfully."}), 200
 
