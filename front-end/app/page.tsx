@@ -11,12 +11,9 @@ export default function SlackbotSettings() {
         <h1 className="title">Member Support Slackbot Settings</h1>
         <div className="divider"></div>
 
-        {/* Current Data State Section */}
         <DatabaseState/>
         <div className="divider"></div>
 
-        {/* Update Data Section */}
-        {/* formData is populated by UpdateDatabase component */}
         <UpdateDatabase/>
         <div className="divider"></div>
 
@@ -33,30 +30,28 @@ function DatabaseState() {
 
   // state for db
   const [info, setInfo] = useState({
-    // lastUpload: "XX/XX/XXXX",
-    dateRange: "03/28/2023 - 01/17/2025",
-    awsUsage: "100000 messages",
-    chromaUsage: "100000 documents",
+    dateRange: "XX/XX/XXXX - XX/XX/XXXX",
+    awsUsage: "##",
   });
 
   const[lastUpload, setLastUpload] = useState('04/10/2025')
 
   useEffect(() => {
-    // const fetchInfo = async () => {
-    //   try {
-    //     const response = await fetch("http://localhost:5000/api/db");
-    //     if (response.ok) {
-    //       const data = await response.json();
-    //       setInfo(data);
-    //     } else {
-    //       console.error("Error fetching data");
-    //     }
-    //   } catch (error) {
-    //     console.error("Error:", error);
-    //   }
-    // };
+    const fetchInfo = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/db");
+        if (response.ok) {
+          const data = await response.json();
+          setInfo(data);
+        } else {
+          console.error("Error fetching data");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
 
-    // fetchInfo();
+    fetchInfo();
 
     //get date of when info was last uploaded
       const date = localStorage.getItem('uploadDate');
@@ -64,18 +59,16 @@ function DatabaseState() {
         setLastUpload(date);
       }
 
-  }, []); // should only run once during component mount
+  }, []);
 
   return(
   <div>
-    {/* get information via get request to flask  */}
     <section className="section">
       <h2 className="section-title">Current Data State</h2>
 
       <div className="card-grid">
         <div className="card">
           <p className="card-title">Last Updated on</p>
-          {/* <p className="card-value">{info.lastUpload}</p> */}
           <p className="card-value">{lastUpload}</p>
         </div>
 
@@ -89,10 +82,6 @@ function DatabaseState() {
           <p className="card-value">{info.awsUsage}</p>
         </div>
 
-        <div className="card">
-          <p className="card-title">ChromaDB Storage Usage</p>
-          <p className="card-value">{info.chromaUsage}</p>
-        </div>
       </div>
     </section>  
   </div>
@@ -104,15 +93,13 @@ function UpdateDatabase() {
     // State for form inputs 
     const [formData, setFormData] = useState({
       jsonExport: [] as File[],
-      // autoUpload: false,
       deleteFrom: "",
       deleteTo: "",
     });
   
     // Handle form submission to Flask
     const handleSubmit = async (e: React.FormEvent<HTMLButtonElement>) => {
-      //handle input data
-      e.preventDefault(); //stops form from instantly submitting
+      e.preventDefault(); 
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (typeof value === "string") {
@@ -163,15 +150,6 @@ function UpdateDatabase() {
 
   };
 
-  // // Handle checkbox change
-  // const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { name, checked } = e.target;
-  //   setFormData((prevState) => ({
-  //     ...prevState,
-  //     [name]: checked,
-  //   }));
-  // };
-
   // Handle input change for text and date inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -186,28 +164,14 @@ function UpdateDatabase() {
     <section className="section">
       <h2 className="section-title">Update Data</h2>
       <div className="update-data-container">
-
         <div className="update-data-column">
           <p className="item-title">Manually upload JSON exports</p>
           <input type="file" multiple name="jsonExport" onChange={handleFileChange}/>
 
-          {/* <div className="toggle-container">
-            <div className="toggle-header">
-              <p className="item-title">Automatically upload messages real-time</p>
-              <label className="toggle">
-                <input type="checkbox" name="autoUpload" checked={formData.autoUpload} onChange={handleCheckboxChange}/>
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <p className="description">When disabled, all updates happen after a manual upload</p>
-          </div> */}
-
           <div className="submit-container">
           <button className="button button-primary" onSubmit={handleSubmit}>SUBMIT CHANGES</button>
         </div>
-        </div>
-
-        
+      </div>
 
         <div className="update-data-column">
           <p className="item-title">Delete Data</p>
@@ -223,6 +187,7 @@ function UpdateDatabase() {
             </div>
           </div>
         </div>
+
       </div>
 
     </section>
@@ -236,6 +201,7 @@ interface StaffMember {
   accountId: string;
 }
 
+{/* Update Task Escalation Section */}
 function StaffInformation() {
 
   const [isEditing, setIsEditing] = useState(false);
@@ -260,7 +226,7 @@ function StaffInformation() {
     fetchStaffList();
   }, []);
 
-  const handleEdit = () => { // toggles edit mode
+  const handleEdit = () => { 
     setIsEditing(!isEditing);
   }
 
@@ -268,10 +234,8 @@ function StaffInformation() {
   // index for member, field for what to update, value
   const handleInputChange = (index: number, field: "name" | "tasks" | "accountId", value:string) => {
     setStaffList((prev) =>
-      //loop through previous state of staff list
       prev.map((staff, i) =>
-        //new object, copy prev data, update with new value
-        i === index ? {...staff, [field]: value } : staff 
+        i === index ? {...staff, [field]: value } : staff //new object, copy prev data, update with new value
       )
     );
   };
@@ -303,7 +267,6 @@ function StaffInformation() {
 
   return (
     <div>
-      {/* Update Task Escalation Section */}
       <section className="section">
       <h2 className="section-title">Update Task Escalation</h2>
 

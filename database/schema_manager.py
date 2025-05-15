@@ -105,6 +105,10 @@ class SchemaManager:
             "DELETE FROM messages WHERE ts >= %s AND ts <= %s RETURNING *",
             (delete_from, delete_to))
         return self.cursor.rowcount
+    
+    def get_usage(self):
+        self.cursor.execute("SELECT pg_size_pretty(pg_relation_size('messages'))")
+        return self.cursor.fetchone()[0]
 
 # Example usage 
 if __name__ == "__main__":
