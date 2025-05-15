@@ -280,6 +280,10 @@ function StaffInformation() {
     setStaffList((prev) => [...prev, {name: "", tasks: "", accountId: ""}]);
   };
 
+  const deleteStaff = (indexToRemove: number) => {
+    setStaffList((prevList) => prevList.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleSubmit = async () => {
     try {
       const response = await fetch("http://localhost:5000/api/staff", {
@@ -308,7 +312,7 @@ function StaffInformation() {
         <Pencil size={16} className="pencil-icon" />
       </button>
       <p className="task-description">
-        {isEditing? "Write task categories separated by comma (ex. Scholarships, Account Recovery, .." : ""}
+        {isEditing? "Write task categories separated by comma (ex. Scholarships, Account Recovery, ..)" : ""}
       </p>
 
       <div className="staff-info">
@@ -333,6 +337,9 @@ function StaffInformation() {
                     <input className="staff-tasks" type="text" value={staff.tasks}
                     onChange={(e) => handleInputChange(index, "tasks", e.target.value)}
                     placeholder={staff.tasks}/>
+                  </div>
+                  <div className="staff-delete">
+                    <button className="button button-edit" onClick={() => deleteStaff(index)}>Delete Staff</button>
                   </div>
                   <div className="divider"></div>
               </div>

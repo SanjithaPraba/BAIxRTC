@@ -6,92 +6,92 @@ import json
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from LangGraph.update_workflow import invoke_update
-from datetime import datetime #get class from module - used to convert timsestamps
-from database.schema_manager import SchemaManager
+#from LangGraph.update_workflow import invoke_update
+#from datetime import datetime #get class from module - used to convert timsestamps
+#from database.schema_manager import SchemaManager
 
 app = Flask(__name__)
 # CORS(app)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
-# get information regarding state of database
-@app.route('/api/db', methods=['GET']) 
-def get_db_state():
-    db_state = {}
+# # get information regarding state of database
+# @app.route('/api/db', methods=['GET']) 
+# def get_db_state():
+#     db_state = {}
  
-    # fetch time range of first + last upload + convert from ts to utc
-    schema_manager = SchemaManager()
-    first_date, last_date = schema_manager.get_timerange()
-    schema_manager.close_connection()
-    if not first_date or not last_date:
-        return jsonify({"error": "No data found in database"}), 404
-    first_dt = datetime.fromtimestamp(int(float(first_date)))
-    last_dt = datetime.fromtimestamp(int(float(last_date)))
-    # turn into strings
-    first_str = first_dt.strftime("%m/%d/%Y")
-    last_str = last_dt.strftime("%m/%d/%Y")
-    # compile strings
-    date_range = f"{first_str} - {last_str}"
-    db_state["dateRange"] = date_range
+#     # fetch time range of first + last upload + convert from ts to utc
+#     schema_manager = SchemaManager()
+#     first_date, last_date = schema_manager.get_timerange()
+#     schema_manager.close_connection()
+#     if not first_date or not last_date:
+#         return jsonify({"error": "No data found in database"}), 404
+#     first_dt = datetime.fromtimestamp(int(float(first_date)))
+#     last_dt = datetime.fromtimestamp(int(float(last_date)))
+#     # turn into strings
+#     first_str = first_dt.strftime("%m/%d/%Y")
+#     last_str = last_dt.strftime("%m/%d/%Y")
+#     # compile strings
+#     date_range = f"{first_str} - {last_str}"
+#     db_state["dateRange"] = date_range
 
-    # fetch storage usage for both chromaDB + EC2, 
+#     # fetch storage usage for both chromaDB + EC2, 
 
-    return jsonify(db_state)
+#     return jsonify(db_state)
 
-# pass changes inputted from react to langgraph
-@app.route('/api/db', methods=['POST'])
-def handle_update():
-    # 1. save the uploaded files to rtc_data
-    uploaded_files = request.files.getlist("jsonExport")
-    saved_file_paths = []
-    should_upload = bool(uploaded_files)
+# # pass changes inputted from react to langgraph
+# @app.route('/api/db', methods=['POST'])
+# def handle_update():
+#     # 1. save the uploaded files to rtc_data
+#     uploaded_files = request.files.getlist("jsonExport")
+#     saved_file_paths = []
+#     should_upload = bool(uploaded_files)
 
 
-    if uploaded_files:
-        for file in uploaded_files:
-            save_path = os.path.join("rtc_data", file.filename)
-            file.save(save_path)
-            saved_file_paths.append(save_path)
+#     if uploaded_files:
+#         for file in uploaded_files:
+#             save_path = os.path.join("rtc_data", file.filename)
+#             file.save(save_path)
+#             saved_file_paths.append(save_path)
 
-    # 2. get the form data values
-    delete_from = request.form.get("deleteFrom") # these are now set to booleans
-    delete_to = request.form.get("deleteTo")
-    should_delete = bool(delete_from and delete_to)
+#     # 2. get the form data values
+#     delete_from = request.form.get("deleteFrom") # these are now set to booleans
+#     delete_to = request.form.get("deleteTo")
+#     should_delete = bool(delete_from and delete_to)
 
-    # 3. convert to timestamps
-    delete_from_ts = date_to_unix(delete_from) if delete_from else None
-    delete_to_ts = date_to_unix(delete_to, end_of_day=True) if delete_to else None
+#     # 3. convert to timestamps
+#     delete_from_ts = date_to_unix(delete_from) if delete_from else None
+#     delete_to_ts = date_to_unix(delete_to, end_of_day=True) if delete_to else None
 
-    # 4. open saved files as file-like objects (simulate FileStorage-like so update_workflow can invoke properly)
-    file_objects = []
-    try:
-        for path in saved_file_paths:
-            f = open(path, "rb")  # opened in binary mode
-            file_objects.append(f)
+#     # 4. open saved files as file-like objects (simulate FileStorage-like so update_workflow can invoke properly)
+#     file_objects = []
+#     try:
+#         for path in saved_file_paths:
+#             f = open(path, "rb")  # opened in binary mode
+#             file_objects.append(f)
 
-        # 5. Call LangGraph workflow with opened files
-        result = invoke_update(
-            json_files=uploaded_files if should_upload else [],
-            delete_from=delete_from_ts if should_delete else None,
-            delete_to=delete_to_ts if should_delete else None
-        )
+#         # 5. Call LangGraph workflow with opened files
+#         result = invoke_update(
+#             json_files=uploaded_files if should_upload else [],
+#             delete_from=delete_from_ts if should_delete else None,
+#             delete_to=delete_to_ts if should_delete else None
+#         )
 
-    finally:
-        # 6. cleanup the file handles
-        for f in file_objects:
-            f.close()
+#     finally:
+#         # 6. cleanup the file handles
+#         for f in file_objects:
+#             f.close()
 
-    return jsonify(result)
+#     return jsonify(result)
 
-def date_to_unix(date_str, end_of_day=False):
-    if not date_str:
-        return ""
-    dt_format = "%Y-%m-%d" #format of input string
-    if end_of_day:
-        dt = datetime.strptime(date_str, dt_format).replace(hour=23, minute=59, second=59) #add on until EOD to date
-    else:
-        dt = datetime.strptime(date_str, dt_format).replace(hour=0, minute=0, second=0) # add on midnight to date
-    return int(dt.timestamp())  # Unix timestamp in seconds
+# def date_to_unix(date_str, end_of_day=False):
+#     if not date_str:
+#         return ""
+#     dt_format = "%Y-%m-%d" #format of input string
+#     if end_of_day:
+#         dt = datetime.strptime(date_str, dt_format).replace(hour=23, minute=59, second=59) #add on until EOD to date
+#     else:
+#         dt = datetime.strptime(date_str, dt_format).replace(hour=0, minute=0, second=0) # add on midnight to date
+#     return int(dt.timestamp())  # Unix timestamp in seconds
 
 
 
